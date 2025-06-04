@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Test - Simple API</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+            background-color: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 10px;
+            margin: 10px 0;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        .connected { background-color: #d4edda; color: #155724; }
+        .disconnected { background-color: #f8d7da; color: #721c24; }
+        .messages {
+            height: 300px;
+            overflow-y: auto;
+            border: 1px solid #ddd;
+            padding: 10px;
+            margin: 10px 0;
+            background-color: #f9f9f9;
+        }
+        .message {
+            margin: 5px 0;
+            padding: 5px;
+            border-left: 3px solid #007bff;
+            background-color: white;
+        }
+        input, button {
+            padding: 10px;
+            margin: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+        }
+        button {
+            background-color: #007bff;
+            color: white;
+            cursor: pointer;
+        }
+        button:hover {
+            background-color: #0056b3;
+        }
+        button:disabled {
+            background-color: #ccc;
+            cursor: not-allowed;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔌 WebSocket Test - Simple API</h1>
+
+        <div id="status" class="status disconnected">
+            ❌ Desconectado
+        </div>
+
+        <div>
+            <label for="deviceId">Device ID:</label>
+            <input type="text" id="deviceId" placeholder="Ej: device123" value="web-client">
+            <button id="connectBtn" onclick="connect()">Conectar</button>
+            <button id="disconnectBtn" onclick="disconnect()" disabled>Desconectar</button>
+        </div>
+
+        <div>
+            <label for="messageInput">Mensaje:</label>
+            <input type="text" id="messageInput" placeholder="Escribe un mensaje..." disabled>
+            <button id="sendBtn" onclick="sendMessage()" disabled>Enviar</button>
+        </div>
+
+        <h3>📨 Mensajes:</h3>
+        <div id="messages" class="messages"></div>
+
+        <h3>🚀 Enviar Broadcast (HTTP):</h3>
+        <div>
+            <input type="text" id="broadcastInput" placeholder="Mensaje para broadcast...">
+            <button onclick="sendBroadcast()">Enviar Broadcast</button>
+        </div>
+    </div>
+
+    <script>
+        let ws = null;
+        let deviceId = '';
+
+        function connect() {
+            deviceId = document.getElementById('deviceId').value || 'web-client';
+            const wsUrl = `ws://localhost:8004/ws/${deviceId}`;
+
+            ws = new WebSocket(wsUrl);
+
+            ws.onopen = function(event) {
+                updateStatus(true);
+                addMessage('🟢 Conectado al WebSocket', 'system');
+            };
+
+            ws.onmessage = function(event) {
+                const data = JSON.parse(event.data);
+                addMessage(`📩 ${data.type}: ${data.message || JSON.stringify(data)}`, 'received');
+            };
+
+            ws.onclose = function(event) {
+                updateStatus(false);
+                addMessage('🔴 Conexión cerrada', 'system');
+            };
+
+            ws.onerror = function(error) {
+                addMessage('❌ Error en WebSocket: ' + error, 'error');
+            };
+        }
+
+        function disconnect() {
+            if (ws) {
+                ws.close();
+                ws = null;
+            }
+        }
+
+        function sendMessage() {
+            const message = document.getElementById('messageInput').value;
+            if (ws && message) {
+                ws.send(message);
+                addMessage(`📤 Enviado: ${message}`, 'sent');
+                document.getElementById('messageInput').value = '';
+            }
+        }
+
+        function sendBroadcast() {
+            const message = document.getElementById('broadcastInput').value;
+            if (message) {
+                fetch('http://localhost:8004/broadcast', {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/json',
+                    },
+                    body: JSON.stringify({
+                        message: message,
+                        device_id: deviceId || 'web-client'
+                    })
+                })
+                .then(response => response.json())
+                .then(data => {
+                    addMessage(`🚀 Broadcast enviado: ${data.message}`, 'broadcast');
+                    document.getElementById('broadcastInput').value = '';
+                })
+                .catch(error => {
+                    addMessage(`❌ Error en broadcast: ${error}`, 'error');
+                });
+            }
+        }
+
+        function updateStatus(connected) {
+            const status = document.getElementById('status');
+            const connectBtn = document.getElementById('connectBtn');
+            const disconnectBtn = document.getElementById('disconnectBtn');
+            const messageInput = document.getElementById('messageInput');
+            const sendBtn = document.getElementById('sendBtn');
+
+            if (connected) {
+                status.textContent = `✅ Conectado como: ${deviceId}`;
+                status.className = 'status connected';
+                connectBtn.disabled = true;
+                disconnectBtn.disabled = false;
+                messageInput.disabled = false;
+                sendBtn.disabled = false;
+            } else {
+                status.textContent = '❌ Desconectado';
+                status.className = 'status disconnected';
+                connectBtn.disabled = false;
+                disconnectBtn.disabled = true;
+                messageInput.disabled = true;
+                sendBtn.disabled = true;
+            }
+        }
+
+        function addMessage(message, type) {
+            const messages = document.getElementById('messages');
+            const messageDiv = document.createElement('div');
+            messageDiv.className = 'message';
+            messageDiv.innerHTML = `<small>${new Date().toLocaleTimeString()}</small><br>${message}`;
+            messages.appendChild(messageDiv);
+            messages.scrollTop = messages.scrollHeight;
+        }
+
+        // Permitir enviar mensaje con Enter
+        document.getElementById('messageInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendMessage();
+            }
+        });
+
+        document.getElementById('broadcastInput').addEventListener('keypress', function(e) {
+            if (e.key === 'Enter') {
+                sendBroadcast();
+            }
+        });
+    </script>
+</body>
+</html>

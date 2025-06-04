@@ -1,11 +1,9 @@
-version: '3.7'
-
 services:
   web:
-    build: ./docker
+    build: .
     command: uvicorn app.main:app --reload --workers 1 --host 0.0.0.0 --port 8000
     volumes:
-      - ./:/usr/src/app/
+      - ../:/usr/src/app/
     working_dir: /usr/src/app
     ports:
-      - 8002:8000
+      - 8004:8000
