@@ -1,6 +1,6 @@
-# Simple API
+# Backend SmartPay
 
-Una API FastAPI simple con soporte para WebSockets y funcionalidad de broadcast de mensajes.
+Una API FastAPI para SmartPay con soporte para WebSockets y funcionalidad de broadcast de mensajes.
 
 ## Características
 
@@ -21,7 +21,7 @@ Una API FastAPI simple con soporte para WebSockets y funcionalidad de broadcast 
 ### WebSocket Endpoints
 - `WS /ws/{device_id}` - Conexión WebSocket para dispositivos
 
-## Cómo Ejecutar
+## Pasos de Ejecución
 
 ### Opción 1: Usando Docker (Recomendado)
 1. Navegar al directorio docker:
@@ -89,7 +89,7 @@ pre-commit run --all-files
 ## Estructura del Proyecto
 
 ```
-SimpleAPI/
+BackendSmartPay/
 ├── app/
 │   ├── __init__.py
 │   └── main.py              # Aplicación principal con WebSockets
