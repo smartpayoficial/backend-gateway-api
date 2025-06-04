@@ -18,6 +18,7 @@ Una API FastAPI para SmartPay con soporte para WebSockets y funcionalidad de bro
 - `GET /connections` - Información sobre conexiones WebSocket activas
 - `GET /docs` - Documentación interactiva de la API
 
+
 ### WebSocket Endpoints
 - `WS /ws/{device_id}` - Conexión WebSocket para dispositivos
 
