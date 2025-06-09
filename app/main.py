@@ -1,234 +1,188 @@
-import json
 from datetime import datetime
-from typing import List, Optional
+from typing import Dict, List, Optional
 
-from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi_socketio import SocketManager
 from pydantic import BaseModel
 
-
-class ConnectionManager:
-    """Gestiona conexiones WebSocket identificadas por **device_id**."""
-
-    def __init__(self):
-        # Mapa device_id -> set de WebSockets activos
-        self.active_connections: dict[str, set[WebSocket]] = {}
-
-    async def connect(self, device_id: str, websocket: WebSocket):
-        """Acepta la conexión y la registra por *device_id*."""
-        self.active_connections.setdefault(device_id, set()).add(websocket)
-
-    def disconnect(self, device_id: str, websocket: WebSocket):
-        """Elimina el *websocket* del dispositivo; si no quedan sockets se borra la clave."""
-        if device_id in self.active_connections:
-            self.active_connections[device_id].discard(websocket)
-            if not self.active_connections[device_id]:
-                self.active_connections.pop(device_id)
-
-    async def send_to_device(self, device_id: str, message: str):
-        """Envía mensaje a un dispositivo concreto si está conectado."""
-        sockets = self.active_connections.get(device_id)
-        if sockets:
-            for ws in list(sockets):
-                try:
-                    await ws.send_text(message)
-                except Exception:
-                    # Remove faulty socket
-                    self.disconnect(device_id, ws)
-
-    async def broadcast(self, message: str):
-        """Envía mensaje a todos los dispositivos conectados."""
-        disconnected: List[tuple[str, WebSocket]] = []
-        for dev_id, sockets in self.active_connections.items():
-            for conn in list(sockets):
-                try:
-                    await conn.send_text(message)
-                except Exception:
-                    disconnected.append((dev_id, conn))
-
-        for dev_id, sock in disconnected:
-            self.disconnect(dev_id, sock)
-
-    def total_devices(self) -> int:
-        """Número de dispositivos únicos conectados."""
-        return len(self.active_connections)
-
-
-class MessageRequest(BaseModel):
-    """Modelo de entrada para envío a **un** dispositivo/sala.
-
-    - **message**: Texto a enviar.
-    - **sender_id**: Identificador del emisor (opcional).
-    - **room_id**: Sala/Dispositivo destino (obligatorio).
-    """
-
-    message: str
-    sender_id: Optional[str] = None
-    room_id: str  # obligatorio
-
-
+# Inicializar la aplicación FastAPI
 app = FastAPI(
-    title="Simple API",
-    description="A simple FastAPI service with WebSockets",
+    title="Socket.IO API",
+    description="A FastAPI service with Socket.IO",
     version="1.0.0",
 )
 
-# Configure CORS
+# Configuración CORS
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],  # In production, replace with your frontend URL
+    allow_origins=["*"],
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
 )
 
-manager = ConnectionManager()
+# Inicializar Socket.IO
+socket_manager = SocketManager(
+    app=app,
+    mount_location="/socket.io",
+    cors_allowed_origins=[],
+    async_mode="asgi",
+    engineio_logger=True,
+)
+
+# Mapa para mantener el seguimiento de las conexiones
+active_connections: Dict[str, List[str]] = {}
 
 
-@app.get("/", tags=["Health"])
-def health_check():
-    """
-    Health check endpoint
+class MessageRequest(BaseModel):
+    """Modelo de entrada para envío de mensajes."""
 
-    Returns the service status and current timestamp
-    """
+    message: str
+    sender_id: Optional[str] = None
+    room_id: str
+
+
+# Eventos de Socket.IO
+@socket_manager.on("connect")
+async def handle_connect(sid, environ, auth):
+    """Maneja la conexión de un nuevo cliente."""
+    try:
+        # Obtener el device_id del query string
+        query = environ.get("QUERY_STRING", "")
+        query_params = dict(qc.split("=") for qc in query.split("&") if "=" in qc)
+        device_id = query_params.get("device_id")
+
+        if not device_id:
+            print("Conexión rechazada: No se proporcionó device_id")
+            return False
+
+        # Registrar la conexión
+        if device_id not in active_connections:
+            active_connections[device_id] = []
+
+        if sid not in active_connections[device_id]:
+            active_connections[device_id].append(sid)
+
+        print(f"Cliente conectado: {sid} (device_id: {device_id})")
+
+        # Enviar mensaje de bienvenida
+        await socket_manager.emit(
+            "message",
+            {
+                "type": "connection",
+                "message": f"Device {device_id} connected",
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "device_id": device_id,
+                "sid": sid,
+            },
+            room=sid,
+        )
+
+        return True
+
+    except Exception as e:
+        print(f"Error en handle_connect: {str(e)}")
+        return False
+
+
+@socket_manager.on("disconnect")
+async def handle_disconnect(sid):
+    """Maneja la desconexión de un cliente."""
+    try:
+        # Encontrar y eliminar el SID de todas las conexiones
+        for device_id, sids in list(active_connections.items()):
+            if sid in sids:
+                sids.remove(sid)
+                print(f"Cliente desconectado: {sid} (device_id: {device_id})")
+
+            # Eliminar el device_id si no hay más conexiones
+            if not sids:
+                active_connections.pop(device_id, None)
+    except Exception as e:
+        print(f"Error en handle_disconnect: {str(e)}")
+
+
+@socket_manager.on("message")
+async def handle_message(sid, data):
+    """Maneja los mensajes entrantes de los clientes."""
+    try:
+        print(f"Mensaje recibido de {sid}: {data}")
+
+        # Enviar el mensaje de vuelta al remitente
+        await socket_manager.emit(
+            "message",
+            {
+                "type": "echo",
+                "message": data,
+                "timestamp": datetime.utcnow().isoformat() + "Z",
+                "sid": sid,
+            },
+            room=sid,
+        )
+    except Exception as e:
+        print(f"Error en handle_message: {str(e)}")
+
+
+# Endpoints HTTP
+@app.get("/")
+async def root():
+    """Endpoint raíz."""
+    return {
+        "service": "Socket.IO API",
+        "status": "running",
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+    }
+
+
+@app.get("/health")
+async def health_check():
+    """Endpoint de verificación de salud."""
     return {
         "status": "healthy",
         "timestamp": datetime.utcnow().isoformat() + "Z",
-        "service": "Simple API",
-        "version": "1.0.0",
-        "connected_devices": manager.total_devices(),
+        "connected_devices": len(active_connections),
+        "total_connections": sum(len(sids) for sids in active_connections.values()),
     }
 
 
-@app.websocket("/ws/{device_id}")
-async def websocket_generic(websocket: WebSocket, device_id: str) -> None:
-    """WebSocket endpoint.
-
-    Args:
-        websocket: The WebSocket connection instance
-        device_id: The ID of the device connecting
-    """
-    # Aceptar la conexión WebSocket sin headers personalizados
-    # Los headers CORS se manejan a nivel de la aplicación FastAPI
-    await websocket.accept()
-
-    try:
-        # Register the connection
-        await manager.connect(device_id, websocket)
-
-        # Send welcome message
-        welcome_msg = {
-            "type": "connection",
-            "message": f"Device {device_id} connected successfully",
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "connected_devices": manager.total_devices(),
-        }
-        await manager.send_to_device(device_id, json.dumps(welcome_msg))
-        print(f"Device {device_id} connected successfully")
-
-        # Handle incoming messages
-        while True:
-            try:
-                data = await websocket.receive_text()
-                print(f"Received from {device_id}: {data}")
-                try:
-                    message = json.loads(data)
-                    response = {
-                        "type": "echo",
-                        "device_id": device_id,
-                        "message": message,
-                        "timestamp": datetime.utcnow().isoformat() + "Z",
-                    }
-                except json.JSONDecodeError:
-                    response = {
-                        "type": "echo",
-                        "device_id": device_id,
-                        "message": data,
-                        "timestamp": datetime.utcnow().isoformat() + "Z",
-                    }
-                await websocket.send_text(json.dumps(response))
-                print(f"Sent to {device_id}: {response}")
-
-            except json.JSONDecodeError:
-                error_msg = {
-                    "type": "error",
-                    "message": "Invalid JSON received",
-                    "timestamp": datetime.utcnow().isoformat() + "Z",
-                }
-                await websocket.send_text(json.dumps(error_msg))
-                print(f"JSON error for {device_id}")
-
-    except WebSocketDisconnect:
-        print(f"Device {device_id} disconnected")
-        manager.disconnect(device_id, websocket)
-    except Exception as e:
-        print(f"WebSocket error for {device_id}: {str(e)}")
-        try:
-            await websocket.close()
-        except (RuntimeError, ConnectionError, WebSocketDisconnect) as e:
-            print(f"Error closing WebSocket: {e}")
-        manager.disconnect(device_id, websocket)
-        print(f"Connection closed for {device_id}")
+@app.get("/connections")
+async def get_connections():
+    """Obtiene información sobre las conexiones actuales."""
+    return {
+        "connected_devices": len(active_connections),
+        "total_connections": sum(len(sids) for sids in active_connections.values()),
+        "devices": [
+            {"id": k, "connections": len(v)} for k, v in active_connections.items()
+        ],
+        "timestamp": datetime.utcnow().isoformat() + "Z",
+    }
 
 
-@app.post("/broadcast", tags=["Messaging"])
+@app.post("/broadcast")
 async def broadcast_message(message_request: MessageRequest):
-    """Envío de mensajes.
-
-    - **message**: Contenido a enviar.
-    - **sender_id**: Identificador (opcional) del emisor.
-    - **room_id**: Sala/Dispositivo destino. Si no se especifica, se envía a todos los dispositivos.
-    """
-
-    if not manager.active_connections:
-        raise HTTPException(status_code=404, detail="No devices connected")
-
-    # Mensaje base
-    base_msg = {
-        "type": "broadcast",
-        "message": message_request.message,
-        "from_device": message_request.sender_id or "server",
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-    }
-
-    # Si no hay room_id, enviar a todos los dispositivos
-    if not message_request.room_id:
-        broadcast_msg = {
-            **base_msg,
-            "recipients": len(manager.active_connections),
-            "broadcast": True,
-        }
-        await manager.broadcast(json.dumps(broadcast_msg))
-        return {
-            "status": "success",
-            "message": "Broadcast message sent to all devices",
-            "recipients": len(manager.active_connections),
+    """Envía un mensaje a todos los dispositivos conectados."""
+    try:
+        message = {
+            "type": "broadcast",
+            "message": message_request.message,
+            "sender_id": message_request.sender_id or "server",
+            "room_id": message_request.room_id,
             "timestamp": datetime.utcnow().isoformat() + "Z",
         }
 
-    # Envío dirigido a un solo dispositivo
-    target = message_request.room_id
-    if target not in manager.active_connections:
-        raise HTTPException(status_code=404, detail="Target device not connected")
+        # Contar destinatarios
+        recipients = sum(len(sids) for sids in active_connections.values())
 
-    directed_msg = {**base_msg, "recipients": 1, "room_id": target}
-    await manager.send_to_device(target, json.dumps(directed_msg))
+        # Enviar a todos los clientes
+        await socket_manager.emit("message", message)
 
-    return {
-        "status": "success",
-        "message": "Message sent to device successfully",
-        "recipients": 1,
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-    }
+        return {
+            "status": "message_sent",
+            "message": "Mensaje enviado a todos los clientes conectados",
+            "recipients": recipients,
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }
 
-
-@app.get("/connections", tags=["Monitoring"])
-def get_connections():
-    """
-    Get information about current WebSocket connections
-    """
-    return {
-        "connected_devices": manager.total_devices(),
-        "timestamp": datetime.utcnow().isoformat() + "Z",
-    }
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=str(e))
