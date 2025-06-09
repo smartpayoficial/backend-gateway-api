@@ -1,15 +1,38 @@
-FROM python:3.12-alpine
+FROM python:3.12-slim
 
-WORKDIR /usr/src/app
+WORKDIR /app
 
-ENV PYTHONDONTWRITEBYTECODE 1
-ENV PYTHONUNBUFFERED 1
+ENV PYTHONDONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    HOST=0.0.0.0 \
+    PORT=8000 \
+    PYTHONPATH=/app
 
-COPY ./requirements.txt /usr/src/app/requirements.txt
+# Instalar dependencias del sistema
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    gcc \
+    python3-dev \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN apk add --no-cache \
-        libressl-dev libffi-dev gcc musl-dev python3-dev \
-    && pip install --no-cache-dir --upgrade pip setuptools wheel \
-    && pip install --no-cache-dir -r /usr/src/app/requirements.txt
+# Instalar dependencias de Python
+COPY requirements.txt .
+RUN pip install --no-cache-dir --upgrade pip && \
+    pip install --no-cache-dir -r requirements.txt
 
-COPY . /usr/src/app/
+# Instalar dependencias de prueba
+COPY test-requirements.txt .
+RUN pip install --no-cache-dir -r test-requirements.txt
+
+# Copiar la aplicación
+COPY . .
+
+# Crear endpoint de health check
+RUN echo 'from fastapi import FastAPI; app = FastAPI(); @app.get("/health") \
+def health_check(): return {"status": "healthy"}' > /app/health_check.py
+
+# Puerto de la aplicación
+EXPOSE 8000
+
+# Comando para iniciar la aplicación
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]

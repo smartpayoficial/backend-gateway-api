@@ -96,19 +96,52 @@
         let deviceId = '';
 
         function connect() {
-            deviceId = document.getElementById('deviceId').value || 'web-client';
-            const wsUrl = `ws://localhost:8004/ws/${deviceId}`;
+            deviceId = document.getElementById('deviceId').value || 'web-client-' + Math.random().toString(36).substr(2, 9);
+            // Conectar directamente al servidor WebSocket en el puerto 8000
+            const wsUrl = `ws://localhost:8000/ws/${deviceId}`;
 
-            ws = new WebSocket(wsUrl);
+            console.log('Intentando conectar a:', wsUrl);
+            addMessage(`🔵 Intentando conectar a ${wsUrl}`, 'system');
+
+            try {
+                ws = new WebSocket(wsUrl);
+                console.log('WebSocket creado');
+            } catch (e) {
+                console.error('Error al crear WebSocket:', e);
+                addMessage(`❌ Error al crear WebSocket: ${e.message}`, 'error');
+                return;
+            }
 
             ws.onopen = function(event) {
+                console.log('Conexión WebSocket establecida', event);
                 updateStatus(true);
                 addMessage('🟢 Conectado al WebSocket', 'system');
+                // No need to send joinRoom message anymore as the connection is established with the device_id in the URL
+            };
+
+            ws.onerror = function(error) {
+                console.error('Error en WebSocket:', error);
+                addMessage(`❌ Error en WebSocket: ${error.message || 'Error desconocido'}`, 'error');
+            };
+
+            ws.onclose = function(event) {
+                console.log('Conexión WebSocket cerrada:', event);
+                updateStatus(false);
+                addMessage('🔴 Desconectado del WebSocket', 'system');
             };
 
             ws.onmessage = function(event) {
-                const data = JSON.parse(event.data);
-                addMessage(`📩 ${data.type}: ${data.message || JSON.stringify(data)}`, 'received');
+                try {
+                    const data = JSON.parse(event.data);
+                    addMessage(`📩 ${data.type}: ${JSON.stringify(data, null, 2)}`, 'received');
+                } catch (e) {
+                    addMessage(`📩 Received: ${event.data}`, 'received');
+                }
+            };
+
+            ws.onerror = function(error) {
+                addMessage(`❌ WebSocket Error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`, 'error');
+                console.error('WebSocket error:', error);
             };
 
             ws.onclose = function(event) {
@@ -140,7 +173,8 @@
         function sendBroadcast() {
             const message = document.getElementById('broadcastInput').value;
             if (message) {
-                fetch('http://localhost:8004/broadcast', {
+                // Usar la ruta directa a la API en el puerto 8000
+                fetch('http://localhost:8000/broadcast', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',

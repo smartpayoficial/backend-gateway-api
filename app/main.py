@@ -3,6 +3,7 @@ from datetime import datetime
 from typing import List, Optional
 
 from fastapi import FastAPI, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
 
@@ -72,6 +73,15 @@ app = FastAPI(
     version="1.0.0",
 )
 
+# Configure CORS
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],  # In production, replace with your frontend URL
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
+
 manager = ConnectionManager()
 
 
@@ -91,44 +101,23 @@ def health_check():
     }
 
 
-@app.websocket("/ws")
-async def websocket_generic(websocket: WebSocket):
-    """WebSocket generico.
+@app.websocket("/ws/{device_id}")
+async def websocket_generic(websocket: WebSocket, device_id: str) -> None:
+    """WebSocket endpoint.
 
-    El cliente debe enviar un JSON con:
-    {"deviceId": "...", "event": "joinRoom"}
-    para quedar registrado en el manager.
+    Args:
+        websocket: The WebSocket connection instance
+        device_id: The ID of the device connecting
     """
-
+    # Aceptar la conexión WebSocket sin headers personalizados
+    # Los headers CORS se manejan a nivel de la aplicación FastAPI
     await websocket.accept()
 
-    device_id: Optional[str] = None
-
     try:
-        # Esperamos mensaje de registro
-        join_payload = await websocket.receive_text()
-        try:
-            join_data = json.loads(join_payload)
-        except json.JSONDecodeError:
-            await websocket.send_text(
-                json.dumps({"error": "Invalid JSON for joinRoom"})
-            )
-            await websocket.close()
-            return
-
-        if join_data.get("event") != "joinRoom" or "deviceId" not in join_data:
-            await websocket.send_text(
-                json.dumps({"error": "First message must be joinRoom with deviceId"})
-            )
-            await websocket.close()
-            return
-
-        device_id = join_data["deviceId"]
-
-        # Registrar conexión
+        # Register the connection
         await manager.connect(device_id, websocket)
 
-        # Mensaje de bienvenida
+        # Send welcome message
         welcome_msg = {
             "type": "connection",
             "message": f"Device {device_id} connected successfully",
@@ -136,23 +125,51 @@ async def websocket_generic(websocket: WebSocket):
             "connected_devices": manager.total_devices(),
         }
         await manager.send_to_device(device_id, json.dumps(welcome_msg))
+        print(f"Device {device_id} connected successfully")
 
-        # Resto del loop: eco simple de texto
+        # Handle incoming messages
         while True:
-            data_text = await websocket.receive_text()
+            try:
+                data = await websocket.receive_text()
+                print(f"Received from {device_id}: {data}")
+                try:
+                    message = json.loads(data)
+                    response = {
+                        "type": "echo",
+                        "device_id": device_id,
+                        "message": message,
+                        "timestamp": datetime.utcnow().isoformat() + "Z",
+                    }
+                except json.JSONDecodeError:
+                    response = {
+                        "type": "echo",
+                        "device_id": device_id,
+                        "message": data,
+                        "timestamp": datetime.utcnow().isoformat() + "Z",
+                    }
+                await websocket.send_text(json.dumps(response))
+                print(f"Sent to {device_id}: {response}")
 
-            response = {
-                "type": "echo",
-                "device_id": device_id,
-                "original_message": data_text,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-            }
-            await manager.send_to_device(device_id, json.dumps(response))
+            except json.JSONDecodeError:
+                error_msg = {
+                    "type": "error",
+                    "message": "Invalid JSON received",
+                    "timestamp": datetime.utcnow().isoformat() + "Z",
+                }
+                await websocket.send_text(json.dumps(error_msg))
+                print(f"JSON error for {device_id}")
 
     except WebSocketDisconnect:
-        if device_id:
-            manager.disconnect(device_id, websocket)
-            print(f"Device {device_id} disconnected")
+        print(f"Device {device_id} disconnected")
+        manager.disconnect(device_id, websocket)
+    except Exception as e:
+        print(f"WebSocket error for {device_id}: {str(e)}")
+        try:
+            await websocket.close()
+        except (RuntimeError, ConnectionError, WebSocketDisconnect) as e:
+            print(f"Error closing WebSocket: {e}")
+        manager.disconnect(device_id, websocket)
+        print(f"Connection closed for {device_id}")
 
 
 @app.post("/broadcast", tags=["Messaging"])
@@ -161,7 +178,7 @@ async def broadcast_message(message_request: MessageRequest):
 
     - **message**: Contenido a enviar.
     - **sender_id**: Identificador (opcional) del emisor.
-    - **room_id**: Sala/Dispositivo destino. Obligatorio.
+    - **room_id**: Sala/Dispositivo destino. Si no se especifica, se envía a todos los dispositivos.
     """
 
     if not manager.active_connections:
@@ -171,13 +188,27 @@ async def broadcast_message(message_request: MessageRequest):
     base_msg = {
         "type": "broadcast",
         "message": message_request.message,
-        "from_device": message_request.sender_id,
+        "from_device": message_request.sender_id or "server",
         "timestamp": datetime.utcnow().isoformat() + "Z",
     }
 
+    # Si no hay room_id, enviar a todos los dispositivos
+    if not message_request.room_id:
+        broadcast_msg = {
+            **base_msg,
+            "recipients": len(manager.active_connections),
+            "broadcast": True,
+        }
+        await manager.broadcast(json.dumps(broadcast_msg))
+        return {
+            "status": "success",
+            "message": "Broadcast message sent to all devices",
+            "recipients": len(manager.active_connections),
+            "timestamp": datetime.utcnow().isoformat() + "Z",
+        }
+
     # Envío dirigido a un solo dispositivo
     target = message_request.room_id
-
     if target not in manager.active_connections:
         raise HTTPException(status_code=404, detail="Target device not connected")
 
