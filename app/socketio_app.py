@@ -2,8 +2,8 @@ from datetime import datetime
 from typing import Dict, Optional
 
 from fastapi import FastAPI, HTTPException
-from fastapi_socketio import SocketManager
 from pydantic import BaseModel
+from app.servicios.socket import sio
 
 app = FastAPI(
     title="Backend SmartPay (Socket.IO)",
@@ -11,8 +11,6 @@ app = FastAPI(
     version="2.0.0",
 )
 
-# Socket.IO manager
-sio = SocketManager(app=app, mount_location="/ws")  # expone /ws/socket.io/*
 
 # Mapeo de sid -> device_id para estadísticas rápidas
 connected_devices: Dict[str, str] = {}
@@ -52,7 +50,7 @@ async def handle_join_room(sid, data):
 
     try:
         # registrar en la sala cuyo nombre es el mismo device_id
-        await sio.enter_room(sid, device_id)
+        await sio.enter_room(sid, device_id, "/")
         connected_devices[sid] = device_id
         print(f"[JOIN_ROOM] Dispositivo {device_id} unido a la sala correctamente")
 
