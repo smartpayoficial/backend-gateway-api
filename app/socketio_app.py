@@ -37,27 +37,53 @@ async def handle_join_room(sid, data):
 
     Expects: { "deviceId": "abc123" }
     """
+    print("\n=== HANDLE_JOIN_ROOM INICIO ===")
+    print(f"[JOIN_ROOM] SID: {sid}")
+    print(f"[JOIN_ROOM] Data recibida: {data}")
+    print(f"[JOIN_ROOM] Tipo de data: {type(data)}")
 
     device_id = data.get("deviceId") if isinstance(data, dict) else None
     if not device_id:
+        print("[JOIN_ROOM] Error: deviceId faltante")
         await sio.emit("error", {"error": "deviceId missing"}, room=sid)
         return
 
-    # registrar en la sala cuyo nombre es el mismo device_id
-    await sio.enter_room(sid, device_id)
-    connected_devices[sid] = device_id
+    print(f"[JOIN_ROOM] Uniendo dispositivo {device_id} (SID: {sid}) a la sala...")
 
-    # Mensaje de confirmación individual
-    await sio.emit(
-        "connection",
-        {
+    try:
+        # registrar en la sala cuyo nombre es el mismo device_id
+        await sio.enter_room(sid, device_id)
+        connected_devices[sid] = device_id
+        print(f"[JOIN_ROOM] Dispositivo {device_id} unido a la sala correctamente")
+
+        # Mensaje de confirmación individual
+        confirmation_data = {
             "message": f"Device {device_id} joined room successfully",
             "device_id": device_id,
             "connected_devices": len(set(connected_devices.values())),
             "timestamp": datetime.utcnow().isoformat() + "Z",
-        },
-        room=sid,
-    )
+        }
+
+        print(
+            f"[JOIN_ROOM] Enviando confirmación a SID {sid} con datos: {confirmation_data}"
+        )
+
+        await sio.emit(
+            "connection",
+            confirmation_data,
+            room=sid,
+        )
+
+        print("[JOIN_ROOM] Confirmación enviada exitosamente")
+
+    except Exception as e:
+        print(f"[JOIN_ROOM] Error al unir a la sala: {str(e)}")
+        import traceback
+
+        traceback.print_exc()
+        await sio.emit("error", {"error": f"Error joining room: {str(e)}"}, room=sid)
+
+    print("=== HANDLE_JOIN_ROOM FIN ===\n")
 
 
 @sio.on("disconnect")

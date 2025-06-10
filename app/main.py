@@ -15,6 +15,9 @@ from app.servicios.socket import (
     sio,
 )
 
+# Importar el manejador de joinRoom
+from app.socketio_app import handle_join_room
+
 # Configuración de la aplicación FastAPI
 app = FastAPI(
     title="SmartPay Gateway API",
@@ -42,12 +45,22 @@ print("Inicializando Socket.IO...")
 sio.on("connect", connect)
 sio.on("disconnect", disconnect)
 sio.on("message", message)
+sio.on("joinRoom", handler=handle_join_room)  # Registrar el manejador joinRoom
+
+# Configurar opciones de CORS en la aplicación FastAPI
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],
+    allow_credentials=True,
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 # Crear aplicación ASGI para Socket.IO
 socket_app = socketio.ASGIApp(sio, socketio_path="/socket.io")
 
 # Montar la aplicación de Socket.IO en FastAPI
-app.mount("/socket.io", socket_app)
+app.mount("", socket_app)
 
 print("Aplicación Socket.IO configurada correctamente")
 
