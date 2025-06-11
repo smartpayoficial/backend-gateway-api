@@ -13,9 +13,9 @@ router = APIRouter()
 
 
 # Modelos de solicitud
-class BlockDeviceRequest(BaseModel):
-    reason: str = Field("", description="Razón del bloqueo")
-    duration: int = Field(3600, description="Duración del bloqueo en segundos")
+class UnBlockDeviceRequest(BaseModel):
+    reason: str = Field("", description="Razón del desbloqueo")
+    duration: int = Field(3600, description="Duración del desbloqueo en segundos")
 
 
 class LocateDeviceRequest(BaseModel):
@@ -44,10 +44,10 @@ class ExceptionRequest(BaseModel):
 
 # Endpoints
 @router.post("/{device_id}/block", summary="Bloquear dispositivo")
-async def block_device(device_id: str, request: BlockDeviceRequest):
+async def block_device(device_id: str):
     """Bloquea un dispositivo por un tiempo determinado."""
     result = await command_manager.block_device(
-        device_id=device_id, reason=request.reason, duration=request.duration
+        device_id=device_id
     )
     if result["status"] == "error":
         raise HTTPException(status_code=400, detail=result["message"])
@@ -55,9 +55,9 @@ async def block_device(device_id: str, request: BlockDeviceRequest):
 
 
 @router.post("/{device_id}/unblock", summary="Desbloquear dispositivo")
-async def unblock_device(device_id: str):
+async def unblock_device(device_id: str, request: UnBlockDeviceRequest):
     """Desbloquea un dispositivo previamente bloqueado."""
-    result = await command_manager.unblock_device(device_id)
+    result = await command_manager.unblock_device(device_id= device_id, reason=request.reason, duration=request.duration)
     if result["status"] == "error":
         raise HTTPException(status_code=400, detail=result["message"])
     return result
