@@ -4,9 +4,15 @@ import httpx
 from fastapi import APIRouter, HTTPException, status
 from pydantic import BaseModel
 
-from app.auth.security import create_access_token, verify_password
+from app.auth.security import create_access_token, decode_access_token, verify_password
 
 router = APIRouter()
+
+
+class RefreshTokenIn(BaseModel):
+    refresh_token: str
+
+
 USER_SVC_URL = os.getenv("USER_SVC_URL") or os.getenv("DB_API", "http://localhost:8002")
 # Prefijo común del servicio de usuarios
 USER_API_PREFIX = "/api/v1"
@@ -21,6 +27,7 @@ class LoginIn(BaseModel):
 
 class TokenOut(BaseModel):
     access_token: str
+    refresh_token: str
     token_type: str = "bearer"
 
 
@@ -45,11 +52,35 @@ async def login(data: LoginIn):
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas"
         )
 
-    token = create_access_token(
-        {
-            "sub": user["user_id"],
-            "username": user["username"],
-            "role": user["role"]["name"],
-        }
+    token_data = {
+        "sub": user["user_id"],
+        "username": user["username"],
+        "role": user["role"]["name"],
+    }
+    token = create_access_token(token_data)
+    # Crear refresh_token con expiración más larga y claim especial
+    refresh_token = create_access_token(
+        {**token_data, "type": "refresh"}, expires_minutes=60 * 24 * 7
+    )  # 7 días
+    return {"access_token": token, "refresh_token": refresh_token}
+
+
+@router.post("/auth/refresh", response_model=TokenOut)
+async def refresh_token(data: RefreshTokenIn):
+    try:
+        payload = decode_access_token(data.refresh_token)
+        if payload.get("type") != "refresh":
+            raise HTTPException(status_code=401, detail="Invalid refresh token")
+    except Exception:
+        raise HTTPException(status_code=401, detail="Invalid or expired refresh token")
+    # Crear nuevos tokens
+    token_data = {
+        "sub": payload["sub"],
+        "username": payload["username"],
+        "role": payload["role"],
+    }
+    access_token = create_access_token(token_data)
+    new_refresh_token = create_access_token(
+        {**token_data, "type": "refresh"}, expires_minutes=60 * 24 * 7
     )
-    return {"access_token": token}
+    return {"access_token": access_token, "refresh_token": new_refresh_token}
