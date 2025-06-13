@@ -409,7 +409,7 @@ class SocketCommandManager:
         )
 
     async def send_notification(
-        self, device_id: str, title: str, message: str, priority: str = "normal"
+        self, device_id: str, title: str, message: str, type: str = "dialog"
     ) -> Dict[str, Any]:
         """Envía una notificación al dispositivo."""
         return await self.send_command(
@@ -417,7 +417,7 @@ class SocketCommandManager:
             command="NOTIFY",
             title=title,
             message=message,
-            priority=priority,
+            type=type,
         )
 
     async def unenroll_device(self, device_id: str, reason: str = "") -> Dict[str, Any]:

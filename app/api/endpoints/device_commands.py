@@ -29,7 +29,7 @@ class RefreshDeviceRequest(BaseModel):
 class NotificationRequest(BaseModel):
     title: str = Field(..., description="Título de la notificación")
     message: str = Field(..., description="Mensaje de la notificación")
-    priority: str = Field("normal", description="Prioridad (low, normal, high)")
+    type: str = Field(..., description="Tipo de notificacion (dialog, notification)")
 
 
 class UnenrollDeviceRequest(BaseModel):
@@ -92,7 +92,7 @@ async def send_notification(device_id: str, request: NotificationRequest):
         device_id=device_id,
         title=request.title,
         message=request.message,
-        priority=request.priority,
+        type=request.type,
     )
     if result["status"] == "error":
         raise HTTPException(status_code=400, detail=result["message"])
