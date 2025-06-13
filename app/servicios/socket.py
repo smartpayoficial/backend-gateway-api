@@ -382,17 +382,17 @@ class SocketCommandManager:
 
     # Comandos específicos
 
-    async def block_device(
-        self, device_id: str
-    ) -> Dict[str, Any]:
+    async def block_device(self, device_id: str) -> Dict[str, Any]:
         """Envía un comando para bloquear un dispositivo."""
-        return await self.send_command(
-            device_id=device_id, command="BLOCK"
-        )
+        return await self.send_command(device_id=device_id, command="BLOCK")
 
-    async def unblock_device(self, device_id: str, reason: str = "", duration: int = 3600) -> Dict[str, Any]:
+    async def unblock_device(
+        self, device_id: str, reason: str = "", duration: int = 3600
+    ) -> Dict[str, Any]:
         """Envía un comando para desbloquear un dispositivo."""
-        return await self.send_command(device_id=device_id, command="UNBLOCK", reason=reason, duration=duration)
+        return await self.send_command(
+            device_id=device_id, command="UNBLOCK", reason=reason, duration=duration
+        )
 
     async def locate_device(self, device_id: str, timeout: int = 30) -> Dict[str, Any]:
         """Solicita la ubicación actual de un dispositivo."""
@@ -456,11 +456,9 @@ async def send_command(device_id: str, command: str, **kwargs) -> Dict[str, Any]
     return await command_manager.send_command(device_id, command, **kwargs)
 
 
-async def block_device(
-    device_id: str, reason: str = "", duration: int = 3600
-) -> Dict[str, Any]:
+async def block_device(device_id: str) -> Dict[str, Any]:
     """Envía un comando para bloquear un dispositivo."""
-    return await command_manager.block_device(device_id, reason, duration)
+    return await command_manager.block_device(device_id)
 
 
 async def unblock_device(device_id: str) -> Dict[str, Any]:
