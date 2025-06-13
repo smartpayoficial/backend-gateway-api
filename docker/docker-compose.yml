@@ -15,10 +15,15 @@ services:
       - PYTHONUNBUFFERED=1
       - PYTHONPATH=/app
       - SOCKETIO_ASYNC_MODE=asgi
+      - DB_API=http://host.docker.internal:8002
+      - USER_SVC_URL=http://host.docker.internal:8002
+
     volumes:
       - ../app:/app/app
       - ./logs:/app/logs
     restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
     # Configuración adicional para manejar muchas conexiones
     sysctls:
       - net.core.somaxconn=65535
