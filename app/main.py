@@ -27,6 +27,12 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
+# Configuración de CORS para permitir solicitudes desde tu frontend
+origins = [
+    "http://localhost:5173",
+    "http://127.0.0.1:5173",
+]
+
 # Configuración de CORS
 app.add_middleware(
     CORSMiddleware,

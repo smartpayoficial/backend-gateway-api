@@ -54,3 +54,15 @@ async def create_user(data: UserCreateIn):
     if resp.status_code != 201:
         raise HTTPException(status_code=resp.status_code, detail=resp.text)
     return resp.json()
+
+
+@router.get(
+    "/users", response_model=list[UserOut]
+)
+async def get_all_users():
+    async with httpx.AsyncClient() as client:
+        url = f"{USER_SVC_URL}{USER_API_PREFIX}/users"
+        resp = await client.get(url, headers=INTERNAL_HDR)
+    if resp.status_code != 200:
+        raise HTTPException(status_code=resp.status_code, detail=resp.text)
+    return resp.json()
