@@ -46,9 +46,7 @@ class ExceptionRequest(BaseModel):
 @router.post("/{device_id}/block", summary="Bloquear dispositivo")
 async def block_device(device_id: str):
     """Bloquea un dispositivo por un tiempo determinado."""
-    result = await command_manager.block_device(
-        device_id=device_id
-    )
+    result = await command_manager.block_device(device_id=device_id)
     if result["status"] == "error":
         raise HTTPException(status_code=400, detail=result["message"])
     return result
@@ -57,7 +55,9 @@ async def block_device(device_id: str):
 @router.post("/{device_id}/unblock", summary="Desbloquear dispositivo")
 async def unblock_device(device_id: str, request: UnBlockDeviceRequest):
     """Desbloquea un dispositivo previamente bloqueado."""
-    result = await command_manager.unblock_device(device_id= device_id, reason=request.reason, duration=request.duration)
+    result = await command_manager.unblock_device(
+        device_id=device_id, reason=request.reason, duration=request.duration
+    )
     if result["status"] == "error":
         raise HTTPException(status_code=400, detail=result["message"])
     return result

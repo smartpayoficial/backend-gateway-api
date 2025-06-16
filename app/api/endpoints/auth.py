@@ -32,7 +32,7 @@ class TokenOut(BaseModel):
     token_type: str = "bearer"
 
 
-@router.post("/auth/login", response_model=TokenOut)
+@router.post("/login", response_model=TokenOut)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     """
     Endpoint seguro de login. Solo requiere username y password (vía formulario).

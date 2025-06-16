@@ -3,6 +3,7 @@ from typing import Dict, Optional
 
 from fastapi import FastAPI, HTTPException
 from pydantic import BaseModel
+
 from app.servicios.socket import sio
 
 app = FastAPI(
