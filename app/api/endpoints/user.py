@@ -1,8 +1,11 @@
 import os
 
 import httpx
-from fastapi import APIRouter, HTTPException
+from fastapi import APIRouter, Depends, HTTPException
 from pydantic import BaseModel, Field
+
+from app.auth.dependencies import get_current_user
+from app.models.user import UserOut
 
 router = APIRouter()
 
@@ -28,24 +31,6 @@ class UserCreateIn(BaseModel):
     state: str = "Active"
 
 
-class UserOut(BaseModel):
-    user_id: str
-    city: dict | None = None
-    dni: str
-    first_name: str
-    middle_name: str | None = None
-    last_name: str
-    second_last_name: str | None = None
-    email: str
-    prefix: str
-    phone: str
-    address: str
-    username: str
-    state: str
-    created_at: str | None = None
-    updated_at: str | None = None
-
-
 @router.post("/users", response_model=UserOut, status_code=201)
 async def create_user(data: UserCreateIn):
     async with httpx.AsyncClient() as client:
@@ -56,9 +41,15 @@ async def create_user(data: UserCreateIn):
     return resp.json()
 
 
-@router.get(
-    "/users", response_model=list[UserOut]
-)
+@router.get("/users/me", response_model=UserOut)
+async def get_me(current_user: UserOut = Depends(get_current_user)):
+    """
+    Retorna la información del usuario autenticado usando el token de acceso.
+    """
+    return current_user
+
+
+@router.get("/users", response_model=list[UserOut])
 async def get_all_users():
     async with httpx.AsyncClient() as client:
         url = f"{USER_SVC_URL}{USER_API_PREFIX}/users"

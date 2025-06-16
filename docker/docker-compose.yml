@@ -19,7 +19,7 @@ services:
       - USER_SVC_URL=http://host.docker.internal:8002
 
     volumes:
-      - ../app:/app/app
+      - ..:/app  # Monta todo el proyecto para autoreload
       - ./logs:/app/logs
     restart: unless-stopped
     extra_hosts:

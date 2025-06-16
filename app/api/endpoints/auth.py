@@ -1,7 +1,8 @@
 import os
 
 import httpx
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.security import OAuth2PasswordRequestForm
 from pydantic import BaseModel
 
 from app.auth.security import create_access_token, decode_access_token, verify_password
@@ -32,9 +33,9 @@ class TokenOut(BaseModel):
 
 
 @router.post("/auth/login", response_model=TokenOut)
-async def login(data: LoginIn):
+async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     async with httpx.AsyncClient() as client:
-        url = f"{USER_SVC_URL}{USER_API_PREFIX}/users/by-username/{data.username}"
+        url = f"{USER_SVC_URL}{USER_API_PREFIX}/users/by-username/{form_data.username}"
         resp = await client.get(url, headers=INTERNAL_HDR)
     if resp.status_code != 200:
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
@@ -45,7 +46,7 @@ async def login(data: LoginIn):
     if is_active is None:
         is_active = str(user.get("state", "")).lower() == "active"
 
-    password_valid = verify_password(data.password, user["password_hash"])
+    password_valid = verify_password(form_data.password, user["password_hash"])
 
     if not is_active or not password_valid:
         raise HTTPException(
