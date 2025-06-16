@@ -35,6 +35,19 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> EndpointUserO
     # Obtener el rol de forma robusta
     # Construir el modelo UserOut completo para endpoints
     # Validar y asignar valores por defecto a todos los campos requeridos por UserOut (endpoints)
+    # Construir el objeto anidado de role
+    role_data = data.get("role", {})
+    role_obj = None
+    if isinstance(role_data, dict):
+        role_obj = {
+            "role_id": role_data.get("role_id", ""),
+            "name": role_data.get("name", ""),
+            "description": role_data.get("description", ""),
+        }
+    else:
+        # Si el backend retorna el role como string o formato inesperado
+        role_obj = {"role_id": "", "name": str(role_data), "description": ""}
+
     user = EndpointUserOut(
         user_id=data.get("user_id", ""),
         city=data.get("city") if data.get("city") is not None else {},
@@ -51,6 +64,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> EndpointUserO
         state=data.get("state", ""),
         created_at=data.get("created_at"),
         updated_at=data.get("updated_at"),
+        role=role_obj,
     )
     return user
 

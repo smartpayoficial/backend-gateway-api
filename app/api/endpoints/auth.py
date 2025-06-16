@@ -34,6 +34,10 @@ class TokenOut(BaseModel):
 
 @router.post("/auth/login", response_model=TokenOut)
 async def login(form_data: OAuth2PasswordRequestForm = Depends()):
+    """
+    Endpoint seguro de login. Solo requiere username y password (vía formulario).
+    No acepta ni expone ningún otro dato sensible.
+    """
     async with httpx.AsyncClient() as client:
         url = f"{USER_SVC_URL}{USER_API_PREFIX}/users/by-username/{form_data.username}"
         resp = await client.get(url, headers=INTERNAL_HDR)
@@ -41,7 +45,6 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
     user = resp.json()
-    # Determinar estado activo (acepta is_active bool o state="Active")
     is_active = user.get("is_active")
     if is_active is None:
         is_active = str(user.get("state", "")).lower() == "active"
@@ -56,10 +59,13 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     token_data = {
         "sub": user["user_id"],
         "username": user["username"],
-        "role": user["role"]["name"],
+        "role": (
+            user["role"]["name"]
+            if isinstance(user.get("role"), dict)
+            else user.get("role", "")
+        ),
     }
     token = create_access_token(token_data)
-    # Crear refresh_token con expiración más larga y claim especial
     refresh_token = create_access_token(
         {**token_data, "type": "refresh"}, expires_minutes=60 * 24 * 7
     )  # 7 días

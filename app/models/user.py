@@ -3,6 +3,12 @@ from typing import Optional
 from pydantic import BaseModel
 
 
+class RoleOut(BaseModel):
+    role_id: str
+    name: str
+    description: str
+
+
 class UserOut(BaseModel):
     user_id: str
     city: dict | None = None
@@ -19,3 +25,4 @@ class UserOut(BaseModel):
     state: str
     created_at: Optional[str] = None
     updated_at: Optional[str] = None
+    role: RoleOut
