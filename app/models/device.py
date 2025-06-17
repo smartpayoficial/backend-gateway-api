@@ -1,4 +1,5 @@
 from enum import Enum
+from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel, field_validator
@@ -25,8 +26,16 @@ class DeviceCreate(DeviceBase):
     enrolment_id: UUID
 
 
-class DeviceUpdate(DeviceBase):
-    pass
+class DeviceUpdate(BaseModel):
+    name: Optional[str] = None
+    imei: Optional[str] = None
+    imei_two: Optional[str] = None
+    serial_number: Optional[str] = None
+    model: Optional[str] = None
+    brand: Optional[str] = None
+    product_name: Optional[str] = None
+    state: Optional[DeviceState] = None
+    enrolment_id: Optional[UUID] = None
 
 
 class DeviceDB(DeviceBase):

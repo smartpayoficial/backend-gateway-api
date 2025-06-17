@@ -1,7 +1,7 @@
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, HTTPException, Response, status
 
 from app.models.device import DeviceCreate, DeviceDB, DeviceUpdate
 from app.servicios import device as device_service
@@ -30,10 +30,11 @@ async def create_device(device: DeviceCreate):
     return await device_service.create_device(device)
 
 
-@router.put("/{device_id}", response_model=DeviceDB)
+@router.patch("/{device_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_device(device_id: UUID, device: DeviceUpdate):
     """Actualiza un dispositivo existente."""
-    return await device_service.update_device(device_id, device)
+    await device_service.update_device(device_id, device)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
 @router.delete("/{device_id}", status_code=status.HTTP_204_NO_CONTENT)

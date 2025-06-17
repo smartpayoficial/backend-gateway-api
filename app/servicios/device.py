@@ -41,10 +41,14 @@ async def create_device(device: DeviceCreate) -> DeviceDB:
     return DeviceDB(**resp.json())
 
 
-async def update_device(device_id: UUID, device: DeviceUpdate) -> DeviceDB:
+async def update_device(device_id: UUID, device: DeviceUpdate) -> Optional[DeviceDB]:
     async with httpx.AsyncClient() as client:
         url = f"{USER_SVC_URL}{DEVICE_API_PREFIX}/devices/{device_id}"
-        resp = await client.put(url, headers=INTERNAL_HDR, json=device.dict())
+        resp = await client.patch(
+            url, headers=INTERNAL_HDR, json=device.dict(exclude_none=True)
+        )
+    if resp.status_code == 204:
+        return None
     resp.raise_for_status()
     return DeviceDB(**resp.json())
 
