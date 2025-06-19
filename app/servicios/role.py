@@ -22,10 +22,11 @@ async def get_role(role_id: UUID) -> Optional[RoleDB]:
     return None
 
 
-async def get_roles() -> List[RoleDB]:
+async def get_roles(name: Optional[str] = None) -> List[RoleDB]:
     async with httpx.AsyncClient() as client:
         url = f"{DB_SVC_URL}{ROLE_API_PREFIX}/roles"
-        resp = await client.get(url, headers=INTERNAL_HDR)
+        params = {"name": name} if name else None
+        resp = await client.get(url, headers=INTERNAL_HDR, params=params)
     if resp.status_code == 200:
         return [RoleDB(**item) for item in resp.json()]
     return []

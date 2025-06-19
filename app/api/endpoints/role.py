@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Response, status
@@ -10,9 +10,9 @@ router = APIRouter()
 
 
 @router.get("/", response_model=List[RoleDB])
-async def list_roles():
-    """Lista todos los roles."""
-    return await role_service.get_roles()
+async def list_roles(name: Optional[str] = None):
+    """Lista todos los roles. Permite filtrar por nombre."""
+    return await role_service.get_roles(name=name)
 
 
 @router.get("/{role_id}", response_model=RoleDB)
@@ -22,6 +22,12 @@ async def get_role(role_id: UUID):
     if not role:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
     return role
+
+
+@router.get("/roles", response_model=List[RoleDB])
+async def get_roles(name: Optional[str] = None) -> List[RoleDB]:
+    """Lista todos los roles. Permite filtrar por nombre."""
+    return await role_service.get_roles(name=name)
 
 
 @router.post("/", response_model=RoleDB, status_code=status.HTTP_201_CREATED)
