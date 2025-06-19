@@ -1,11 +1,13 @@
 import os
+from uuid import UUID
 
 import httpx
-from fastapi import APIRouter, Depends, HTTPException
+from fastapi import APIRouter, Depends, HTTPException, Response
 from pydantic import BaseModel, Field
 
 from app.auth.dependencies import get_current_user
-from app.models.user import UserOut
+from app.models.user import UserOut, UserUpdate
+from app.servicios import user as user_service
 
 router = APIRouter()
 
@@ -39,6 +41,22 @@ async def create_user(data: UserCreateIn):
     if resp.status_code != 201:
         raise HTTPException(status_code=resp.status_code, detail=resp.text)
     return resp.json()
+
+
+@router.patch("/users/{user_id}", response_model=UserOut)
+async def update_user(user_id: UUID, data: UserUpdate):
+    user = await user_service.update_user(user_id, data)
+    if user is None:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    return user
+
+
+@router.delete("/users/{user_id}", status_code=204)
+async def delete_user(user_id: UUID):
+    ok = await user_service.delete_user(user_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Usuario no encontrado")
+    return Response(status_code=204)
 
 
 @router.get("/users/me", response_model=UserOut)
