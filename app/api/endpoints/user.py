@@ -1,4 +1,5 @@
 import os
+from typing import Optional
 from uuid import UUID
 
 import httpx
@@ -68,10 +69,15 @@ async def get_me(current_user: UserOut = Depends(get_current_user)):
 
 
 @router.get("/users", response_model=list[UserOut])
-async def get_all_users():
+async def get_all_users(role_name: Optional[str] = None, state: Optional[str] = None):
+    params = {}
+    if role_name:
+        params["role_name"] = role_name
+    if state:
+        params["state"] = state
     async with httpx.AsyncClient() as client:
         url = f"{USER_SVC_URL}{USER_API_PREFIX}/users"
-        resp = await client.get(url, headers=INTERNAL_HDR)
+        resp = await client.get(url, headers=INTERNAL_HDR, params=params)
     if resp.status_code != 200:
         raise HTTPException(status_code=resp.status_code, detail=resp.text)
     return resp.json()
