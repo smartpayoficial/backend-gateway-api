@@ -1,30 +1,69 @@
 import os
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 
 import httpx
 
-from app.models.user import UserOut, UserUpdate
+from app.models.user import User, UserCreate, UserUpdate
 
 USER_SVC_URL = os.getenv("USER_SVC_URL") or os.getenv("DB_API", "http://localhost:8002")
 USER_API_PREFIX = "/api/v1"
 INTERNAL_HDR = {"X-Internal-Request": "true"}
 
 
-async def update_user(user_id: UUID, user: UserUpdate) -> Optional[UserOut]:
+async def get_user(user_id: UUID) -> Optional[User]:
+    async with httpx.AsyncClient() as client:
+        url = f"{USER_SVC_URL}{USER_API_PREFIX}/users/{user_id}"
+        resp = await client.get(url, headers=INTERNAL_HDR)
+    if resp.status_code == 200:
+        return User(**resp.json())
+    return None
+
+
+async def get_users(
+    role_name: Optional[str] = None, state: Optional[str] = None
+) -> List[User]:
+    params = {}
+    if role_name:
+        params["role_name"] = role_name
+    if state:
+        params["state"] = state
+
+    async with httpx.AsyncClient() as client:
+        url = f"{USER_SVC_URL}{USER_API_PREFIX}/users"
+        resp = await client.get(url, headers=INTERNAL_HDR, params=params)
+
+    if resp.status_code == 200:
+        return [User(**item) for item in resp.json()]
+    return []
+
+
+async def create_user(user_in: UserCreate) -> User:
+    async with httpx.AsyncClient() as client:
+        url = f"{USER_SVC_URL}{USER_API_PREFIX}/users"
+        resp = await client.post(
+            url, headers=INTERNAL_HDR, json=user_in.model_dump(mode="json")
+        )
+    resp.raise_for_status()
+    return User(**resp.json())
+
+
+async def update_user(user_id: UUID, user: UserUpdate) -> Optional[User]:
     async with httpx.AsyncClient() as client:
         url = f"{USER_SVC_URL}{USER_API_PREFIX}/users/{user_id}"
         resp = await client.patch(
-            url, headers=INTERNAL_HDR, json=user.dict(exclude_none=True)
+            url, headers=INTERNAL_HDR, json=user.model_dump(exclude_none=True)
         )
-    if resp.status_code == 204:
+    if resp.status_code == 404:
         return None
     resp.raise_for_status()
-    return UserOut(**resp.json())
+    return User(**resp.json())
 
 
 async def delete_user(user_id: UUID) -> bool:
     async with httpx.AsyncClient() as client:
         url = f"{USER_SVC_URL}{USER_API_PREFIX}/users/{user_id}"
         resp = await client.delete(url, headers=INTERNAL_HDR)
+    if resp.status_code == 404:
+        return False
     return resp.status_code == 204

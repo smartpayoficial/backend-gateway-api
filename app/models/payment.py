@@ -6,6 +6,9 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from .device import Device
+from .plan import Plan
+
 
 class PaymentState(str, Enum):
     PENDING = "Pending"
@@ -44,18 +47,28 @@ class PlanDB(PlanBase):
         orm_mode = True
 
 
-class PaymentBase(BaseModel):
-    device_id: UUID
-    plan_id: UUID
+class Payment(BaseModel):
+    payment_id: UUID
     value: Decimal
     method: str
     state: PaymentState
     date: datetime
     reference: str
+    device: Device
+    plan: Plan
+
+    class Config:
+        orm_mode = True
 
 
-class PaymentCreate(PaymentBase):
-    pass
+class PaymentCreate(BaseModel):
+    value: Decimal
+    method: str
+    state: PaymentState
+    date: datetime
+    reference: str
+    device: Device
+    plan: Plan
 
 
 class PaymentUpdate(BaseModel):
@@ -66,10 +79,3 @@ class PaymentUpdate(BaseModel):
     state: Optional[PaymentState] = None
     date: Optional[datetime] = None
     reference: Optional[str] = None
-
-
-class PaymentDB(PaymentBase):
-    payment_id: UUID
-
-    class Config:
-        orm_mode = True

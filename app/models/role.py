@@ -1,12 +1,12 @@
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class RoleBase(BaseModel):
     name: str
-    description: str
+    description: Optional[str] = None
 
 
 class RoleCreate(RoleBase):
@@ -18,16 +18,6 @@ class RoleUpdate(BaseModel):
     description: Optional[str] = None
 
 
-class RoleDB(RoleBase):
+class Role(RoleBase):
+    model_config = ConfigDict(from_attributes=True)
     role_id: UUID
-
-    class Config:
-        orm_mode = True
-
-
-# --- NUEVO: Esquema para la salida de roles ---
-class RoleOut(RoleBase):
-    role_id: UUID
-
-    class Config:
-        orm_mode = True

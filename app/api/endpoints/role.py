@@ -3,19 +3,19 @@ from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Response, status
 
-from app.models.role import RoleCreate, RoleDB, RoleUpdate
+from app.models.role import Role, RoleCreate, RoleUpdate
 from app.servicios import role as role_service
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[RoleDB])
+@router.get("/", response_model=List[Role])
 async def list_roles(name: Optional[str] = None):
     """Lista todos los roles. Permite filtrar por nombre."""
     return await role_service.get_roles(name=name)
 
 
-@router.get("/{role_id}", response_model=RoleDB)
+@router.get("/{role_id}", response_model=Role)
 async def get_role(role_id: UUID):
     """Obtiene un rol por su ID."""
     role = await role_service.get_role(role_id)
@@ -24,7 +24,7 @@ async def get_role(role_id: UUID):
     return role
 
 
-@router.post("/", response_model=RoleDB, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=Role, status_code=status.HTTP_201_CREATED)
 async def create_role_endpoint(role: RoleCreate):
     """Crea un nuevo rol."""
     return await role_service.create_role(role)

@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, field_validator
 
+from .enrolment import Enrolment
+
 
 class DeviceState(str, Enum):
     ACTIVE = "Active"
@@ -36,6 +38,22 @@ class DeviceUpdate(BaseModel):
     product_name: Optional[str] = None
     state: Optional[DeviceState] = None
     enrolment_id: Optional[UUID] = None
+
+
+class Device(BaseModel):
+    device_id: UUID
+    name: str
+    imei: str
+    imei_two: Optional[str] = None
+    serial_number: str
+    model: str
+    brand: str
+    product_name: str
+    state: str
+    enrolment: Enrolment
+
+    class Config:
+        from_attributes = True
 
 
 class DeviceDB(DeviceBase):

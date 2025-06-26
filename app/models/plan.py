@@ -1,13 +1,16 @@
+from datetime import date
 from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
 
+from .user import User
+
 
 class PlanBase(BaseModel):
-    name: str
+    name: Optional[str] = None
     description: Optional[str] = None
-    price: float
+    price: Optional[float] = None
     active: bool = True
 
 
@@ -25,6 +28,21 @@ class PlanUpdate(BaseModel):
     description: Optional[str] = None
     price: Optional[float] = None
     active: Optional[bool] = None
+
+
+class Plan(PlanBase):
+    plan_id: UUID
+    user_id: UUID
+    vendor_id: UUID
+    device_id: UUID
+    initial_date: date
+    quotas: int
+    contract: str
+    user: User
+    vendor: User
+
+    class Config:
+        from_attributes = True
 
 
 class PlanDB(PlanBase):

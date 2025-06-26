@@ -1,83 +1,49 @@
-import os
-from typing import Optional
+from typing import List, Optional
 from uuid import UUID
 
-import httpx
-from fastapi import APIRouter, Depends, HTTPException, Response
-from pydantic import BaseModel, Field
+from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from app.auth.dependencies import get_current_user
-from app.models.user import UserOut, UserUpdate
+from app.models.user import User, UserCreate, UserUpdate
 from app.servicios import user as user_service
 
 router = APIRouter()
 
-USER_SVC_URL = os.getenv("USER_SVC_URL") or os.getenv("DB_API", "http://localhost:8002")
-USER_API_PREFIX = "/api/v1"
-INTERNAL_HDR = {"X-Internal-Request": "true"}
+
+@router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
+async def create_user(user_in: UserCreate):
+    return await user_service.create_user(user_in)
 
 
-class UserCreateIn(BaseModel):
-    city_id: str
-    dni: str = Field(..., max_length=15)
-    first_name: str
-    middle_name: str | None = None
-    last_name: str
-    second_last_name: str | None = None
-    email: str
-    prefix: str
-    phone: str
-    address: str
-    username: str
-    password: str
-    role_id: str
-    state: str = "Active"
-
-
-@router.post("/users", response_model=UserOut, status_code=201)
-async def create_user(data: UserCreateIn):
-    async with httpx.AsyncClient() as client:
-        url = f"{USER_SVC_URL}{USER_API_PREFIX}/users"
-        resp = await client.post(url, headers=INTERNAL_HDR, json=data.dict())
-    if resp.status_code != 201:
-        raise HTTPException(status_code=resp.status_code, detail=resp.text)
-    return resp.json()
-
-
-@router.patch("/users/{user_id}", response_model=UserOut)
-async def update_user(user_id: UUID, data: UserUpdate):
-    user = await user_service.update_user(user_id, data)
-    if user is None:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    return user
-
-
-@router.delete("/users/{user_id}", status_code=204)
-async def delete_user(user_id: UUID):
-    ok = await user_service.delete_user(user_id)
-    if not ok:
-        raise HTTPException(status_code=404, detail="Usuario no encontrado")
-    return Response(status_code=204)
-
-
-@router.get("/users/me", response_model=UserOut)
-async def get_me(current_user: UserOut = Depends(get_current_user)):
-    """
-    Retorna la información del usuario autenticado usando el token de acceso.
-    """
+@router.get("/me", response_model=User)
+async def read_users_me(current_user: User = Depends(get_current_user)):
     return current_user
 
 
-@router.get("/users", response_model=list[UserOut])
-async def get_all_users(role_name: Optional[str] = None, state: Optional[str] = None):
-    params = {}
-    if role_name:
-        params["role_name"] = role_name
-    if state:
-        params["state"] = state
-    async with httpx.AsyncClient() as client:
-        url = f"{USER_SVC_URL}{USER_API_PREFIX}/users"
-        resp = await client.get(url, headers=INTERNAL_HDR, params=params)
-    if resp.status_code != 200:
-        raise HTTPException(status_code=resp.status_code, detail=resp.text)
-    return resp.json()
+@router.get("/{user_id}", response_model=User)
+async def read_user_by_id(user_id: UUID):
+    user = await user_service.get_user(user_id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@router.get("/", response_model=List[User])
+async def read_users(role_name: Optional[str] = None, state: Optional[str] = None):
+    return await user_service.get_users(role_name=role_name, state=state)
+
+
+@router.patch("/{user_id}", response_model=User)
+async def update_user(user_id: UUID, user_in: UserUpdate):
+    user = await user_service.update_user(user_id, user_in)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+    return user
+
+
+@router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
+async def delete_user(user_id: UUID):
+    success = await user_service.delete_user(user_id)
+    if not success:
+        raise HTTPException(status_code=404, detail="User not found")
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
