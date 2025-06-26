@@ -19,12 +19,12 @@ services:
       - USER_SVC_URL=http://host.docker.internal:8002
 
     volumes:
-      - ..:/app  # Monta todo el proyecto para autoreload
+      - ..:/app
       - ./logs:/app/logs
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    # Configuración adicional para manejar muchas conexiones
+
     sysctls:
       - net.core.somaxconn=65535
     ulimits:

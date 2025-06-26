@@ -1,22 +1,11 @@
-import socketio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 # Importar el router de la API
 from app.api.api import api_router
 
-# Importar el módulo de socket
-from app.servicios.socket import (
-    connect,
-    disconnect,
-    get_active_connections,
-    message,
-    print_connections,
-    sio,
-)
-
-# Importar el manejador de joinRoom
-from app.socketio_app import handle_join_room
+# Importar el router de sockets
+from app.routers.socket_router import router as socket_router
 
 # Configuración de la aplicación FastAPI
 app = FastAPI(
@@ -29,6 +18,8 @@ app = FastAPI(
 
 # Incluir el router principal para exponer /api/v1/*
 app.include_router(api_router)
+# Incluir el router de sockets
+app.include_router(socket_router)
 
 # Configuración de CORS para permitir solicitudes desde tu frontend
 origins = [
@@ -44,45 +35,6 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
-
-# Incluir los routers de la API
-app.include_router(api_router)
-
-print("Inicializando Socket.IO...")
-
-# Configurar manejadores de eventos Socket.IO
-sio.on("connect", connect)
-sio.on("disconnect", disconnect)
-sio.on("message", message)
-sio.on("joinRoom", handler=handle_join_room)  # Registrar el manejador joinRoom
-
-# Configurar opciones de CORS en la aplicación FastAPI
-app.add_middleware(
-    CORSMiddleware,
-    allow_origins=["*"],
-    allow_credentials=True,
-    allow_methods=["*"],
-    allow_headers=["*"],
-)
-
-# Crear aplicación ASGI para Socket.IO
-socket_app = socketio.ASGIApp(sio, socketio_path="/socket.io")
-
-# Montar la aplicación de Socket.IO en FastAPI
-app.mount("", socket_app)
-
-print("Aplicación Socket.IO configurada correctamente")
-
-# Obtener conexiones activas
-active_connections = get_active_connections()
-
-# Verificar manejadores registrados
-print("\n=== VERIFICACIÓN DE MANEJADORES REGISTRADOS ===")
-print(f"[SOCKET.IO] Manejadores registrados: {sio.handlers}")
-
-# Verificar conexiones activas
-print("\n=== CONEXIONES ACTIVAS ===")
-print_connections()
 
 
 # Endpoint raíz
