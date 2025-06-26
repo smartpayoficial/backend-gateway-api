@@ -42,6 +42,11 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
 
     user_data = resp.json()
 
+    # Normalize user state from user service
+    user_state = user_data.get("state")
+    if user_state in ("UserState.ACTIVE", "Active"):
+        user_data["state"] = "A"
+
     if user_data.get("state") != "A":
         raise HTTPException(status_code=400, detail="Usuario inactivo o bloqueado")
 
