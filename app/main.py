@@ -3,8 +3,6 @@ from fastapi.middleware.cors import CORSMiddleware
 
 # Importar el router de la API
 from app.api.api import api_router
-
-# Importar el router de sockets
 from app.routers.socket_router import router as socket_router
 
 # Configuración de la aplicación FastAPI
@@ -18,7 +16,6 @@ app = FastAPI(
 
 # Incluir el router principal para exponer /api/v1/*
 app.include_router(api_router)
-# Incluir el router de sockets
 app.include_router(socket_router)
 
 # Configuración de CORS para permitir solicitudes desde tu frontend

@@ -43,47 +43,47 @@ async def send_action_command(
 
 
 @router.post("/action/block", tags=["Device Actions"])
-async def action_block(device_id: str, body: ActionPayload = None):
+async def action_block(device_id: str, body: Optional[ActionPayload] = None):
     return await send_action_command(device_id, "block", body.payload if body else None)
 
 
 @router.post("/action/locate", tags=["Device Actions"])
-async def action_locate(device_id: str, body: ActionPayload = None):
+async def action_locate(device_id: str, body: Optional[ActionPayload] = None):
     return await send_action_command(
         device_id, "locate", body.payload if body else None
     )
 
 
 @router.post("/action/refresh", tags=["Device Actions"])
-async def action_refresh(device_id: str, body: ActionPayload = None):
+async def action_refresh(device_id: str, body: Optional[ActionPayload] = None):
     return await send_action_command(
         device_id, "refresh", body.payload if body else None
     )
 
 
 @router.post("/action/notify", tags=["Device Actions"])
-async def action_notify(device_id: str, body: ActionPayload = None):
+async def action_notify(device_id: str, body: Optional[ActionPayload] = None):
     return await send_action_command(
         device_id, "notify", body.payload if body else None
     )
 
 
 @router.post("/action/unenroll", tags=["Device Actions"])
-async def action_unenroll(device_id: str, body: ActionPayload = None):
+async def action_unenroll(device_id: str, body: Optional[ActionPayload] = None):
     return await send_action_command(
         device_id, "unenroll", body.payload if body else None
     )
 
 
 @router.post("/action/unblock", tags=["Device Actions"])
-async def action_unblock(device_id: str, body: ActionPayload = None):
+async def action_unblock(device_id: str, body: Optional[ActionPayload] = None):
     return await send_action_command(
         device_id, "unblock", body.payload if body else None
     )
 
 
 @router.post("/action/exception", tags=["Device Actions"])
-async def action_exception(device_id: str, body: ActionPayload = None):
+async def action_exception(device_id: str, body: Optional[ActionPayload] = None):
     return await send_action_command(
         device_id, "exception", body.payload if body else None
     )
