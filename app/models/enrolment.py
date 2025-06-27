@@ -1,5 +1,4 @@
 from datetime import datetime
-from typing import Optional
 from uuid import UUID
 
 from pydantic import BaseModel
@@ -8,12 +7,12 @@ from .user import User
 
 
 class EnrolmentBase(BaseModel):
-    user_id: Optional[UUID] = None
-    vendor_id: Optional[UUID] = None
+    pass
 
 
 class EnrolmentCreate(EnrolmentBase):
-    pass
+    user_id: UUID
+    vendor_id: UUID
 
 
 class EnrolmentUpdate(BaseModel):

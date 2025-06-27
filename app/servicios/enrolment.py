@@ -1,8 +1,10 @@
+import logging
 import os
 from typing import List, Optional
 from uuid import UUID
 
 import httpx
+from fastapi import HTTPException
 
 from app.models.enrolment import EnrolmentCreate, EnrolmentDB, EnrolmentUpdate
 from app.servicios.user import get_user
@@ -52,13 +54,43 @@ async def get_enrolments() -> List[EnrolmentDB]:
 
 
 async def create_enrolment(enrolment: EnrolmentCreate) -> EnrolmentDB:
-    async with httpx.AsyncClient() as client:
-        url = f"{DB_SVC_URL}{ENROLMENT_API_PREFIX}/enrolments"
-        resp = await client.post(
-            url, headers=INTERNAL_HDR, json=enrolment.model_dump(mode="json")
+    # Proactively validate that the user and vendor exist.
+    user_obj = await get_user(enrolment.user_id)
+    if not user_obj:
+        raise HTTPException(
+            status_code=400,
+            detail=f"User with ID '{enrolment.user_id}' does not exist.",
         )
-    resp.raise_for_status()
-    return EnrolmentDB(**resp.json())
+
+    vendor_obj = await get_user(enrolment.vendor_id)
+    if not vendor_obj:
+        raise HTTPException(
+            status_code=400,
+            detail=f"Vendor with ID '{enrolment.vendor_id}' does not exist.",
+        )
+
+    # If validation passes, proceed to create the enrolment.
+    payload = enrolment.model_dump(mode="json")
+    async with httpx.AsyncClient() as client:
+        url = f"{DB_SVC_URL}{ENROLMENT_API_PREFIX}/enrolments/"
+        try:
+            resp = await client.post(url, headers=INTERNAL_HDR, json=payload)
+            resp.raise_for_status()
+
+            # Enrich the response with the objects we've already fetched.
+            response_data = resp.json()
+            response_data["user"] = user_obj.model_dump()
+            response_data["vendor"] = vendor_obj.model_dump()
+
+            return EnrolmentDB(**response_data)
+
+        except httpx.HTTPStatusError as e:
+            # Log unexpected errors from the downstream service.
+            logging.error(
+                f"Error creating enrolment. Downstream service responded with {e.response.status_code}."
+            )
+            logging.error(f"Response body: {e.response.text}")
+            raise
 
 
 async def update_enrolment(
