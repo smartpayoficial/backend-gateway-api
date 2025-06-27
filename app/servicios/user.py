@@ -5,6 +5,7 @@ from uuid import UUID
 import httpx
 
 from app.models.user import User, UserCreate, UserUpdate
+from app.servicios.city import get_city
 
 USER_SVC_URL = os.getenv("USER_SVC_URL") or os.getenv("DB_API", "http://localhost:8002")
 USER_API_PREFIX = "/api/v1"
@@ -16,7 +17,11 @@ async def get_user(user_id: UUID) -> Optional[User]:
         url = f"{USER_SVC_URL}{USER_API_PREFIX}/users/{user_id}"
         resp = await client.get(url, headers=INTERNAL_HDR)
     if resp.status_code == 200:
-        return User(**resp.json())
+        user_data = resp.json()
+        if user_data.get("city_id"):
+            city_obj = await get_city(user_data["city_id"])
+            user_data["city"] = city_obj.model_dump() if city_obj else None
+        return User(**user_data)
     return None
 
 
@@ -28,13 +33,18 @@ async def get_users(
         params["role_name"] = role_name
     if state:
         params["state"] = state
-
     async with httpx.AsyncClient() as client:
-        url = f"{USER_SVC_URL}{USER_API_PREFIX}/users"
-        resp = await client.get(url, headers=INTERNAL_HDR, params=params)
-
+        url = f"{USER_SVC_URL}{USER_API_PREFIX}/users/"
+        resp = await client.get(url, params=params, headers=INTERNAL_HDR)
     if resp.status_code == 200:
-        return [User(**item) for item in resp.json()]
+        users_data = resp.json()
+        enriched_users = []
+        for user_data in users_data:
+            if user_data.get("city_id"):
+                city_obj = await get_city(user_data["city_id"])
+                user_data["city"] = city_obj.model_dump() if city_obj else None
+            enriched_users.append(User(**user_data))
+        return enriched_users
     return []
 
 

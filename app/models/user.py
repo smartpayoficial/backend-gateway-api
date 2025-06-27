@@ -4,6 +4,7 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr
 
+from .city import CityDB
 from .role import Role
 
 
@@ -13,8 +14,7 @@ class UserBase(BaseModel):
     first_name: str
     last_name: str
     dni: str
-    city_id: Optional[UUID] = None
-    role_id: Optional[UUID] = None
+
     middle_name: Optional[str] = None
     second_last_name: Optional[str] = None
     prefix: Optional[str] = None
@@ -24,6 +24,8 @@ class UserBase(BaseModel):
 
 
 class UserCreate(UserBase):
+    city_id: Optional[UUID] = None
+    role_id: Optional[UUID] = None
     password: str
 
 
@@ -51,3 +53,4 @@ class User(UserBase):
     created_at: datetime
     updated_at: datetime
     role: Role
+    city: Optional[CityDB] = None
