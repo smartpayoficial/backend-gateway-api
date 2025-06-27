@@ -19,7 +19,14 @@ async def get_enrolment(enrolment_id: UUID) -> Optional[EnrolmentDB]:
         url = f"{DB_SVC_URL}{ENROLMENT_API_PREFIX}/enrolments/{enrolment_id}"
         resp = await client.get(url, headers=INTERNAL_HDR)
     if resp.status_code == 200:
-        return EnrolmentDB(**resp.json())
+        enrolment_data = resp.json()
+        if enrolment_data.get("user_id"):
+            user_obj = await get_user(enrolment_data["user_id"])
+            enrolment_data["user"] = user_obj.model_dump() if user_obj else None
+        if enrolment_data.get("vendor_id"):
+            vendor_obj = await get_user(enrolment_data["vendor_id"])
+            enrolment_data["vendor"] = vendor_obj.model_dump() if vendor_obj else None
+        return EnrolmentDB(**enrolment_data)
     return None
 
 
