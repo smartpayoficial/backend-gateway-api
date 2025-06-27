@@ -25,7 +25,7 @@ COPY test-requirements.txt .
 RUN pip install --no-cache-dir -r test-requirements.txt
 
 # Copiar la aplicación
-COPY . .
+# COPY . .  <-- This is commented out to rely on the volume mount in docker-compose.dev.yml
 
 # Crear endpoint de health check
 RUN echo 'from fastapi import FastAPI; app = FastAPI(); @app.get("/health") \
