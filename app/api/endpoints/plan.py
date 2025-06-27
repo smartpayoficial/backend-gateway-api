@@ -1,13 +1,49 @@
+import os
+import shutil
 from typing import List
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, Path, status
-from fastapi.responses import JSONResponse
+from fastapi import APIRouter, File, Form, HTTPException, Path, UploadFile, status
+from fastapi.responses import FileResponse, JSONResponse
 
 from app.models.plan import PlanCreate, PlanDB, PlanRaw, PlanUpdate
 from app.servicios import plan as plan_service
 
 router = APIRouter()
+
+UPLOADS_DIR = "uploads/"
+
+
+@router.post("/upload-pdf/", status_code=status.HTTP_200_OK)
+async def upload_plan_pdf(plan_id: str = Form(...), file: UploadFile = File(...)):
+    if not file.content_type == "application/pdf":
+        raise HTTPException(
+            status_code=400, detail="Invalid file type. Only PDFs are allowed."
+        )
+
+    # Create the uploads directory if it doesn't exist
+    os.makedirs(UPLOADS_DIR, exist_ok=True)
+
+    file_path = os.path.join(UPLOADS_DIR, f"{plan_id}.pdf")
+
+    try:
+        with open(file_path, "wb") as buffer:
+            shutil.copyfileobj(file.file, buffer)
+    finally:
+        file.file.close()
+
+    return {"message": f"Successfully uploaded {file.filename} as {plan_id}.pdf"}
+
+
+@router.get("/download-pdf/{plan_id}")
+async def download_plan_pdf(plan_id: str):
+    file_path = os.path.join(UPLOADS_DIR, f"{plan_id}.pdf")
+    if not os.path.exists(file_path):
+        raise HTTPException(status_code=404, detail="PDF not found for this plan_id.")
+
+    return FileResponse(
+        path=file_path, media_type="application/pdf", filename=f"{plan_id}.pdf"
+    )
 
 
 @router.post("/", response_model=PlanDB, status_code=status.HTTP_201_CREATED)
