@@ -4,7 +4,9 @@ from uuid import UUID
 
 import httpx
 
+from app.models.action import ActionCreate
 from app.models.device import DeviceCreate, DeviceDB, DeviceUpdate
+from app.servicios import action as action_service
 
 USER_SVC_URL = os.getenv("USER_SVC_URL") or os.getenv("DB_API", "http://localhost:8002")
 DEVICE_API_PREFIX = "/api/v1"
@@ -31,30 +33,61 @@ async def get_devices() -> List[DeviceDB]:
     return []
 
 
-async def create_device(device: DeviceCreate) -> DeviceDB:
+async def create_device(device_in: DeviceCreate) -> DeviceDB:
     async with httpx.AsyncClient() as client:
         url = f"{USER_SVC_URL}{DEVICE_API_PREFIX}/devices"
         resp = await client.post(
-            url, headers=INTERNAL_HDR, json=device.model_dump(mode="json")
+            url, headers=INTERNAL_HDR, json=device_in.model_dump(mode="json")
         )
     resp.raise_for_status()
-    return DeviceDB(**resp.json())
+    new_device = DeviceDB(**resp.json())
+
+    # Log the action
+    action_log = ActionCreate(
+        action_type="CREATE",
+        details=f"Device created with serial {new_device.serial_number}",
+        device_id=new_device.id,
+    )
+    await action_service.create_action(action_log)
+
+    return new_device
 
 
-async def update_device(device_id: UUID, device: DeviceUpdate) -> Optional[DeviceDB]:
+async def update_device(device_id: UUID, device_in: DeviceUpdate) -> Optional[DeviceDB]:
     async with httpx.AsyncClient() as client:
         url = f"{USER_SVC_URL}{DEVICE_API_PREFIX}/devices/{device_id}"
         resp = await client.patch(
-            url, headers=INTERNAL_HDR, json=device.dict(exclude_none=True)
+            url, headers=INTERNAL_HDR, json=device_in.dict(exclude_none=True)
         )
-    if resp.status_code == 204:
+    if resp.status_code == 404:
         return None
     resp.raise_for_status()
-    return DeviceDB(**resp.json())
+    updated_device = DeviceDB(**resp.json())
+
+    # Log the action
+    action_log = ActionCreate(
+        action_type="UPDATE",
+        details=f"Device {device_id} updated.",
+        device_id=device_id,
+    )
+    await action_service.create_action(action_log)
+
+    return updated_device
 
 
 async def delete_device(device_id: UUID) -> bool:
     async with httpx.AsyncClient() as client:
         url = f"{USER_SVC_URL}{DEVICE_API_PREFIX}/devices/{device_id}"
         resp = await client.delete(url, headers=INTERNAL_HDR)
-    return resp.status_code == 204
+
+    if resp.status_code == 204:
+        # Log the action
+        action_log = ActionCreate(
+            action_type="DELETE",
+            details=f"Device {device_id} deleted.",
+            device_id=device_id,
+        )
+        await action_service.create_action(action_log)
+        return True
+
+    return False
