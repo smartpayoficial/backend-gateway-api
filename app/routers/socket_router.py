@@ -58,7 +58,7 @@ async def send_action_command(
     if device_id_str not in manager.active_connections:
         # Device is offline, return 202 Accepted
         response_data = {
-            "status": "queued",
+            "status": "Pending",
             "detail": "Device is offline. Action has been queued for later execution.",
             "command": command,
             "device_id": device_id_str,
