@@ -31,18 +31,16 @@ class PlanUpdate(BaseModel):
 
 
 class Plan(PlanBase):
-    plan_id: UUID
     user_id: UUID
     vendor_id: UUID
     device_id: UUID
     initial_date: date
     quotas: int
     contract: str
-    user: User
-    vendor: User
+    plan_id: UUID
 
     class Config:
-        from_attributes = True
+        pass
 
 
 class PlanDB(PlanBase):

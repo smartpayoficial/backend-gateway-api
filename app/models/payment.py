@@ -67,8 +67,8 @@ class PaymentCreate(BaseModel):
     state: PaymentState
     date: datetime
     reference: str
-    device: Device
-    plan: Plan
+    device_id: UUID
+    plan_id: UUID
 
 
 class PaymentUpdate(BaseModel):
