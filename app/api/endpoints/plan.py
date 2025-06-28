@@ -6,7 +6,7 @@ from uuid import UUID
 from fastapi import APIRouter, File, Form, HTTPException, Path, UploadFile, status
 from fastapi.responses import FileResponse, JSONResponse
 
-from app.models.plan import PlanCreate, PlanDB, PlanRaw, PlanUpdate
+from app.models.plan import Plan, PlanCreate, PlanDB, PlanRaw, PlanUpdate
 from app.servicios import plan as plan_service
 
 router = APIRouter()
@@ -46,7 +46,7 @@ async def download_plan_pdf(plan_id: str):
     )
 
 
-@router.post("/", response_model=PlanDB, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=Plan, status_code=status.HTTP_201_CREATED)
 async def create_plan(new_plan: PlanCreate):
     return await plan_service.create_plan(new_plan)
 

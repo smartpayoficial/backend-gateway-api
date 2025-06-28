@@ -3,6 +3,7 @@ from typing import List, Optional
 from uuid import UUID
 
 import httpx
+from fastapi.encoders import jsonable_encoder
 
 from app.models.plan import PlanCreate, PlanUpdate
 
@@ -32,8 +33,15 @@ async def get_plan_by_id(plan_id: UUID) -> Optional[dict]:
 async def create_plan(plan: PlanCreate) -> dict:
     async with httpx.AsyncClient() as client:
         url = f"{DB_SVC_URL}{PLAN_API_PREFIX}"
-        resp = await client.post(url, headers=INTERNAL_HDR, json=plan.dict())
+
+        json_compatible_plan_data = jsonable_encoder(plan)
+
+        resp = await client.post(
+            url, headers=INTERNAL_HDR, json=json_compatible_plan_data
+        )
+
     resp.raise_for_status()
+    print(f"DEBUG: Raw response from DB service for plan: {resp.json()}")
     return resp.json()
 
 

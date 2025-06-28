@@ -14,13 +14,8 @@ INTERNAL_HDR = {"X-Internal-Request": "true"}
 
 
 async def create_payment(payment: PaymentCreate) -> Payment:
-    # The DB service expects a flat structure with IDs, not nested objects.
-    # We convert the main object to a dict, excluding the nested objects.
-    payment_data = payment.model_dump(mode="json", exclude={"device", "plan"})
 
-    # Then, we add the IDs from the nested objects.
-    payment_data["device_id"] = str(payment.device.device_id)
-    payment_data["plan_id"] = str(payment.plan.plan_id)
+    payment_data = payment.model_dump(mode="json", exclude={"device", "plan"})
 
     async with httpx.AsyncClient() as client:
         url = f"{DB_SVC_URL}{PAYMENT_API_PREFIX}"
