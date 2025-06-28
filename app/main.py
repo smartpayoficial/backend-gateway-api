@@ -1,9 +1,11 @@
+import socketio
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-# Importar el router de la API
+# Importar routers y la instancia de Socket.IO
 from app.api.api import api_router
 from app.routers.socket_router import router as socket_router
+from app.services.socket_service import sio
 
 # Configuración de la aplicación FastAPI
 app = FastAPI(
@@ -14,7 +16,11 @@ app = FastAPI(
     redoc_url="/redoc",
 )
 
-# Incluir el router principal para exponer /api/v1/*
+# Montar la aplicación Socket.IO en la ruta /socket.io
+sio_app = socketio.ASGIApp(sio)
+app.mount("/socket.io", sio_app)
+
+# Incluir los routers HTTP
 app.include_router(api_router)
 app.include_router(socket_router)
 

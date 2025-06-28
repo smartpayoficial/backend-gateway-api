@@ -1,18 +1,18 @@
-import json
 from datetime import datetime
 from typing import Any, Dict, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, HTTPException, WebSocket, WebSocketDisconnect
+from fastapi import APIRouter, HTTPException
 from fastapi.responses import JSONResponse
 from pydantic import BaseModel
 
 from app.models.action import ActionCreate
-from app.services.socket_service import ConnectionManager
+
+# Importar el manager y sio desde el servicio de socket refactorizado
+from app.services.socket_service import manager
 from app.servicios import action as action_service
 
 router = APIRouter()
-manager = ConnectionManager()
 
 
 class MessageRequest(BaseModel):
@@ -27,25 +27,29 @@ class ActionBody(BaseModel):
 
 
 async def send_action_command(
-    device_id: UUID, command: str, applied_by_id: UUID, payload: Optional[dict] = None
+    device_id: str, command: str, applied_by_id: UUID, payload: Optional[dict] = None
 ):
     """
     Logs an action and sends it to a device if connected.
     - If the device is connected, sends the command and returns a 200 OK response.
     - If the device is offline, queues the action and returns a 202 Accepted response.
     """
-    # 1. Log the action first. FastAPI has already validated the UUID.
+    # 1. Log the action if the device_id is a valid UUID.
     try:
+        # Try to convert device_id to UUID for logging purposes.
+        # If it fails, it's a non-standard ID (e.g., from a web client), so we skip logging.
+        device_uuid = UUID(device_id)
         action_log = ActionCreate(
-            device_id=device_id,
+            device_id=device_uuid,
             applied_by_id=applied_by_id,
             action=command,
             description=f"Action '{command}' queued for device {device_id}. Payload: {payload or '{}'}",
         )
         await action_service.create_action(action_log)
-    except Exception as e:
-        # For potential errors during DB write
-        raise HTTPException(status_code=500, detail=f"Failed to log action: {e}")
+    except (ValueError, Exception) as e:
+        # ValueError for failed UUID conversion, Exception for DB errors.
+        # We don't raise an exception, as sending the command is more critical.
+        print(f"INFO: Could not log action for device '{device_id}'. Reason: {e}")
 
     timestamp = datetime.utcnow().isoformat() + "Z"
     device_id_str = str(device_id)
@@ -62,15 +66,15 @@ async def send_action_command(
         }
         return JSONResponse(status_code=202, content=response_data)
 
-    # Device is online, send the command
+    # Device is online, send the command via Socket.IO
     action_msg = {
-        "event": "action",
         "command": command,
         "device_id": device_id_str,
         "payload": payload or {},
         "timestamp": timestamp,
     }
-    await manager.send_to_device(device_id_str, json.dumps(action_msg))
+    # El nombre del evento es 'action', los datos son el diccionario action_msg
+    await manager.send_to_device(device_id_str, event="action", data=action_msg)
 
     response_data = {
         "status": "sent",
@@ -83,49 +87,49 @@ async def send_action_command(
 
 
 @router.post("/action/{device_id}/block", tags=["Device Actions"])
-async def action_block(device_id: UUID, body: ActionBody):
+async def action_block(device_id: str, body: ActionBody):
     return await send_action_command(
         device_id, "block", body.applied_by_id, body.payload
     )
 
 
 @router.post("/action/{device_id}/locate", tags=["Device Actions"])
-async def action_locate(device_id: UUID, body: ActionBody):
+async def action_locate(device_id: str, body: ActionBody):
     return await send_action_command(
         device_id, "locate", body.applied_by_id, body.payload
     )
 
 
 @router.post("/action/{device_id}/refresh", tags=["Device Actions"])
-async def action_refresh(device_id: UUID, body: ActionBody):
+async def action_refresh(device_id: str, body: ActionBody):
     return await send_action_command(
         device_id, "refresh", body.applied_by_id, body.payload
     )
 
 
 @router.post("/action/{device_id}/notify", tags=["Device Actions"])
-async def action_notify(device_id: UUID, body: ActionBody):
+async def action_notify(device_id: str, body: ActionBody):
     return await send_action_command(
         device_id, "notify", body.applied_by_id, body.payload
     )
 
 
 @router.post("/action/{device_id}/unenroll", tags=["Device Actions"])
-async def action_unenroll(device_id: UUID, body: ActionBody):
+async def action_unenroll(device_id: str, body: ActionBody):
     return await send_action_command(
         device_id, "unenroll", body.applied_by_id, body.payload
     )
 
 
 @router.post("/action/{device_id}/unblock", tags=["Device Actions"])
-async def action_unblock(device_id: UUID, body: ActionBody):
+async def action_unblock(device_id: str, body: ActionBody):
     return await send_action_command(
         device_id, "unblock", body.applied_by_id, body.payload
     )
 
 
 @router.post("/action/{device_id}/exception", tags=["Device Actions"])
-async def action_exception(device_id: UUID, body: ActionBody):
+async def action_exception(device_id: str, body: ActionBody):
     return await send_action_command(
         device_id, "exception", body.applied_by_id, body.payload
     )
@@ -161,60 +165,13 @@ async def broadcast_message(message_request: MessageRequest):
     target = message_request.room_id
     if target not in manager.active_connections:
         raise HTTPException(status_code=404, detail="Target device not connected")
+
     directed_msg = {**base_msg, "recipients": 1, "room_id": target}
-    await manager.send_to_device(target, json.dumps(directed_msg))
+    # Enviar como un evento 'message' al dispositivo/sala de destino
+    await manager.send_to_device(target, event="message", data=directed_msg)
     return {
         "status": "success",
         "message": "Message sent to device successfully",
         "recipients": 1,
         "timestamp": datetime.utcnow().isoformat() + "Z",
     }
-
-
-@router.websocket("/ws")
-async def websocket_generic(websocket: WebSocket):
-    """
-    WebSocket generico. El cliente debe enviar un JSON con:
-    {"deviceId": "...", "event": "joinRoom"}
-    para quedar registrado en el manager.
-    """
-    await websocket.accept()
-    device_id: Optional[str] = None
-    try:
-        join_payload = await websocket.receive_text()
-        try:
-            join_data = json.loads(join_payload)
-        except json.JSONDecodeError:
-            await websocket.send_text(
-                json.dumps({"error": "Invalid JSON for joinRoom"})
-            )
-            await websocket.close()
-            return
-        if join_data.get("event") != "joinRoom" or "deviceId" not in join_data:
-            await websocket.send_text(
-                json.dumps({"error": "First message must be joinRoom with deviceId"})
-            )
-            await websocket.close()
-            return
-        device_id = join_data["deviceId"]
-        await manager.connect(device_id, websocket)
-        welcome_msg = {
-            "type": "connection",
-            "message": f"Device {device_id} connected successfully",
-            "timestamp": datetime.utcnow().isoformat() + "Z",
-            "connected_devices": manager.total_devices(),
-        }
-        await manager.send_to_device(device_id, json.dumps(welcome_msg))
-        while True:
-            data_text = await websocket.receive_text()
-            response = {
-                "type": "echo",
-                "device_id": device_id,
-                "original_message": data_text,
-                "timestamp": datetime.utcnow().isoformat() + "Z",
-            }
-            await manager.send_to_device(device_id, json.dumps(response))
-    except WebSocketDisconnect:
-        if device_id:
-            manager.disconnect(device_id, websocket)
-            print(f"Device {device_id} disconnected")

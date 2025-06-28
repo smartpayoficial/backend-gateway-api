@@ -4,6 +4,7 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>WebSocket Test - Simple API</title>
+    <script src="https://cdn.socket.io/4.7.5/socket.io.min.js"></script>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -92,80 +93,79 @@
     </div>
 
     <script>
-        let ws = null;
+        let socket = null;
         let deviceId = '';
 
         function connect() {
             deviceId = document.getElementById('deviceId').value || 'web-client-' + Math.random().toString(36).substr(2, 9);
-            // Conectar directamente al servidor WebSocket en el puerto 8000
-            const wsUrl = `ws://localhost:8000/ws/${deviceId}`;
+            const serverUrl = 'http://localhost:8000';
 
-            console.log('Intentando conectar a:', wsUrl);
-            addMessage(`🔵 Intentando conectar a ${wsUrl}`, 'system');
+            addMessage(`🔵 Intentando conectar a ${serverUrl} con Socket.IO...`, 'system');
 
-            try {
-                ws = new WebSocket(wsUrl);
-                console.log('WebSocket creado');
-            } catch (e) {
-                console.error('Error al crear WebSocket:', e);
-                addMessage(`❌ Error al crear WebSocket: ${e.message}`, 'error');
-                return;
-            }
+            // Conectar usando el cliente de Socket.IO
+            // Se conectará automáticamente al endpoint /socket.io
+            socket = io(serverUrl, {
+                transports: ['websocket'] // Forzar el uso de WebSockets
+            });
 
-            ws.onopen = function(event) {
-                console.log('Conexión WebSocket establecida', event);
+            // --- Manejadores de eventos de Socket.IO ---
+
+            socket.on('connect', () => {
+                console.log('Conexión Socket.IO establecida. SID:', socket.id);
+                addMessage('🟢 Conectado, enviando identificación...', 'system');
+
+                // Una vez conectado, emitir el evento 'joinRoom' para identificarse
+                socket.emit('joinRoom', { deviceId: deviceId });
+
                 updateStatus(true);
-                addMessage('🟢 Conectado al WebSocket', 'system');
-                // No need to send joinRoom message anymore as the connection is established with the device_id in the URL
-            };
+            });
 
-            ws.onerror = function(error) {
-                console.error('Error en WebSocket:', error);
-                addMessage(`❌ Error en WebSocket: ${error.message || 'Error desconocido'}`, 'error');
-            };
-
-            ws.onclose = function(event) {
-                console.log('Conexión WebSocket cerrada:', event);
+            socket.on('disconnect', (reason) => {
+                console.log('Desconectado de Socket.IO:', reason);
+                addMessage(`🔴 Desconectado: ${reason}`, 'system');
                 updateStatus(false);
-                addMessage('🔴 Desconectado del WebSocket', 'system');
-            };
+            });
 
-            ws.onmessage = function(event) {
-                try {
-                    const data = JSON.parse(event.data);
-                    addMessage(`📩 ${data.type}: ${JSON.stringify(data, null, 2)}`, 'received');
-                } catch (e) {
-                    addMessage(`📩 Received: ${event.data}`, 'received');
-                }
-            };
-
-            ws.onerror = function(error) {
-                addMessage(`❌ WebSocket Error: ${JSON.stringify(error, Object.getOwnPropertyNames(error))}`, 'error');
-                console.error('WebSocket error:', error);
-            };
-
-            ws.onclose = function(event) {
+            socket.on('connect_error', (error) => {
+                console.error('Error de conexión Socket.IO:', error);
+                addMessage(`❌ Error de conexión: ${error.message}`, 'error');
                 updateStatus(false);
-                addMessage('🔴 Conexión cerrada', 'system');
-            };
+            });
 
-            ws.onerror = function(error) {
-                addMessage('❌ Error en WebSocket: ' + error, 'error');
-            };
+            // Evento para recibir mensajes generales del servidor
+            socket.on('message', (data) => {
+                const message = typeof data === 'object' ? JSON.stringify(data, null, 2) : data;
+                addMessage(`📩 Mensaje: ${message}`, 'received');
+            });
+
+            // Evento para recibir acciones específicas
+            socket.on('action', (data) => {
+                const message = JSON.stringify(data, null, 2);
+                addMessage(`⚡ Acción: ${message}`, 'action');
+            });
+
+            // Evento para errores enviados por el servidor
+            socket.on('error', (data) => {
+                addMessage(`❌ Error del servidor: ${data.message}`, 'error');
+            });
         }
 
         function disconnect() {
-            if (ws) {
-                ws.close();
-                ws = null;
+            if (socket) {
+                socket.disconnect();
             }
         }
 
         function sendMessage() {
-            const message = document.getElementById('messageInput').value;
-            if (ws && message) {
-                ws.send(message);
-                addMessage(`📤 Enviado: ${message}`, 'sent');
+            const messageText = document.getElementById('messageInput').value;
+            if (socket && messageText) {
+                // Emitir un evento genérico 'message' o uno específico si se requiere
+                const payload = {
+                    from: deviceId,
+                    message: messageText
+                };
+                socket.emit('message', payload);
+                addMessage(`📤 Enviado: ${messageText}`, 'sent');
                 document.getElementById('messageInput').value = '';
             }
         }
