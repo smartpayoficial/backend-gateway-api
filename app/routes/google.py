@@ -1,5 +1,7 @@
+import logging
+
 from fastapi import FastAPI, Request, APIRouter
-from fastapi.responses import RedirectResponse
+from fastapi.responses import RedirectResponse 
 import requests, os, urllib.parse
 
 from app.models.factory_reset_protection import FactoryResetProtectionCreate, FactoryResetProtectionState
@@ -7,16 +9,24 @@ from app.servicios import factory_reset_protection as factory_reset_protection_s
 
 router = APIRouter(tags=["google"])
 
+CLIENT_ID = os.getenv("CLIENT_ID")
+CLIENT_SECRET = os.getenv("CLIENT_SECRET")
+REDIRECT_URI = os.getenv("REDIRECT_URI")
+
 @router.get("/auth/callback")
 async def auth_callback(request: Request):
     code = request.query_params.get("code")
 
+    logging.error(
+                f"Google - {CLIENT_ID} - {CLIENT_SECRET} - {REDIRECT_URI}."
+            )
+
     # 1. Obtener el token
     token_res = requests.post("https://oauth2.googleapis.com/token", data={
         "code": code,
-        "client_id": "631597337466-dt7qitq7tg2022rhje5ib5sk0eua6t79.apps.googleusercontent.com",
-        "client_secret": "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",
-        "redirect_uri": "http://localhost:8000/api/v1/google/auth/callback",
+        "client_id": CLIENT_ID,
+        "client_secret": CLIENT_SECRET,
+        "redirect_uri": REDIRECT_URI,
         "grant_type": "authorization_code"
     })
 
