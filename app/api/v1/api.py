@@ -11,7 +11,7 @@ from app.api.endpoints import (
     role,
     user,
 )
-from app.routes import action, payment
+from app.routes import action, payment, google, factory_reset_protection
 
 api_router = APIRouter()
 
@@ -24,6 +24,8 @@ api_router.include_router(city.router, prefix="/cities", tags=["cities"])
 api_router.include_router(role.router, prefix="/roles", tags=["roles"])
 api_router.include_router(payment.router, prefix="/payments", tags=["Payments"])
 api_router.include_router(action.router, prefix="/actions", tags=["Actions"])
+api_router.include_router(google.router, prefix="/google", tags=["google"])
+api_router.include_router(factory_reset_protection.router, prefix="/factoryResetProtection", tags=["factoryResetProtection"])
 
 api_router.include_router(country.router, prefix="/countries", tags=["Countries"])
 api_router.include_router(region.router, prefix="/regions", tags=["Regions"])
