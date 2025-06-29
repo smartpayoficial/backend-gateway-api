@@ -37,6 +37,10 @@ async def auth_callback(request: Request):
     email = data.get("emailAddresses", [{}])[0].get("value", "")
     account_id = data.get("resourceName", "").replace("people/", "")
 
+    if not account_id: 
+        print("El objeto data está vacío")
+        return RedirectResponse(f"http://localhost:5173/configuration")
+
     exist = await factory_reset_protection_service.get_factory_reset_protection_by_account(account_id)
     if not exist:
         factory = FactoryResetProtectionCreate(
@@ -46,11 +50,4 @@ async def auth_callback(request: Request):
             state = FactoryResetProtectionState.ACTIVE
         )
         await factory_reset_protection_service.create_factory_reset_protection(factory)
-
-    query = urllib.parse.urlencode({
-        "name": name,
-        "email": email,
-        "account_id": account_id
-    })
-
-    return RedirectResponse(f"http://localhost:5173/configuration/response?{query}")
+    return RedirectResponse(f"http://localhost:5173/configuration")
