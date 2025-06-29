@@ -1,5 +1,3 @@
-import logging
-
 from fastapi import FastAPI, Request, APIRouter
 from fastapi.responses import RedirectResponse 
 import requests, os, urllib.parse
@@ -16,10 +14,6 @@ REDIRECT_URI = os.getenv("REDIRECT_URI")
 @router.get("/auth/callback")
 async def auth_callback(request: Request):
     code = request.query_params.get("code")
-
-    logging.error(
-                f"Google - {CLIENT_ID} - {CLIENT_SECRET} - {REDIRECT_URI}."
-            )
 
     # 1. Obtener el token
     token_res = requests.post("https://oauth2.googleapis.com/token", data={
