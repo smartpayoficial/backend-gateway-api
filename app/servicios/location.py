@@ -191,6 +191,13 @@ async def get_location(location_id: UUID) -> Optional[LocationDB]:
     return LocationDB(**resp.json()) if resp.status_code == 200 else None
 
 
+async def get_location_by_device(device_id: UUID) -> Optional[LocationDB]:
+    async with httpx.AsyncClient() as client:
+        url = f"{DB_SVC_URL}{LOCATION_API_PREFIX}/locations/device/{device_id}"
+        resp = await client.get(url, headers=INTERNAL_HDR)
+    return LocationDB(**resp.json()) if resp.status_code == 200 else None
+
+
 async def get_locations(device_id: Optional[UUID] = None) -> List[LocationDB]:
     params = {}
     if device_id:

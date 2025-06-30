@@ -93,3 +93,11 @@ async def delete_location(location_id: UUID):
     success = await location_service.delete_location(location_id)
     if not success:
         raise HTTPException(status_code=404, detail="Location not found")
+
+
+@router.get("/locations/device/{device_id}", response_model=LocationDB)
+async def get_location_by_device_id(device_id: UUID):
+    location = await location_service.get_location_by_device(device_id)
+    if not location:
+        raise HTTPException(status_code=404, detail="Location not found")
+    return location

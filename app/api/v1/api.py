@@ -25,6 +25,7 @@ api_router.include_router(role.router, prefix="/roles", tags=["roles"])
 api_router.include_router(payment.router, prefix="/payments", tags=["Payments"])
 api_router.include_router(action.router, prefix="/actions", tags=["Actions"])
 api_router.include_router(google.router, prefix="/google", tags=["google"])
+api_router.include_router(factory_reset_protection.router, prefix="/factoryResetProtection", tags=["factoryResetProtection"])
 api_router.include_router(sim.router, prefix="/sims", tags=["sims"])
 
 api_router.include_router(country.router, prefix="/countries", tags=["Countries"])
