@@ -57,18 +57,19 @@ async def create_device(device_in: DeviceCreate) -> DeviceDB:
     return new_device
 
 
-async def update_device(
-    device_id: UUID, device_in: DeviceUpdate, applied_by_id: UUID
-) -> Optional[DeviceDB]:
+async def update_device(device_id: UUID, device_in: DeviceUpdate) -> Optional[DeviceDB]:
     async with httpx.AsyncClient() as client:
         url = f"{USER_SVC_URL}{DEVICE_API_PREFIX}/devices/{device_id}"
         resp = await client.patch(
-            url, headers=INTERNAL_HDR, json=device_in.model_dump(exclude_none=True)
+            url, headers=INTERNAL_HDR, json=device_in.model_dump(exclude_unset=True)
         )
-    if resp.status_code == 404:
-        return None
-    resp.raise_for_status()
-    updated_device = DeviceDB(**resp.json())
+
+    if resp.status_code == 200:
+        return DeviceDB(**resp.json())
+    if resp.status_code == 204:
+        return await get_device(device_id)
+
+    return None
 
     # TODO: Logging for UPDATE needs a valid ActionType in the enum.
     # action_log = ActionCreate(
@@ -79,10 +80,8 @@ async def update_device(
     # )
     # await action_service.create_action(action_log)
 
-    return updated_device
 
-
-async def delete_device(device_id: UUID, applied_by_id: UUID) -> bool:
+async def delete_device(device_id: UUID) -> bool:
     async with httpx.AsyncClient() as client:
         url = f"{USER_SVC_URL}{DEVICE_API_PREFIX}/devices/{device_id}"
         resp = await client.delete(url, headers=INTERNAL_HDR)

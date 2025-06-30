@@ -2,7 +2,6 @@ from typing import List, Optional
 from uuid import UUID
 
 from fastapi import APIRouter, HTTPException, Path, Query, status
-from pydantic import BaseModel
 
 # Imports for Device
 from app.models.device import DeviceCreate, DeviceDB, DeviceUpdate
@@ -13,17 +12,6 @@ from app.servicios import device as device_service
 from app.servicios import location as location_service
 
 router = APIRouter()
-
-
-# --- Body Models for Auditability ---
-
-
-class DeviceUpdateBody(DeviceUpdate):
-    applied_by_id: UUID
-
-
-class DeleteBody(BaseModel):
-    applied_by_id: UUID
 
 
 # --- Device Endpoints ---
@@ -48,19 +36,16 @@ async def get_device_by_id(device_id: UUID = Path(...)):
 
 
 @router.patch("/{device_id}", response_model=DeviceDB)
-async def update_device(device_id: UUID, body: DeviceUpdateBody):
-    device_in = DeviceUpdate(**body.model_dump(exclude={"applied_by_id"}))
-    device = await device_service.update_device(
-        device_id, device_in, body.applied_by_id
-    )
+async def update_device(device_id: UUID, device_in: DeviceUpdate):
+    device = await device_service.update_device(device_id, device_in)
     if not device:
         raise HTTPException(status_code=404, detail="Device not found")
     return device
 
 
 @router.delete("/{device_id}", status_code=status.HTTP_204_NO_CONTENT)
-async def delete_device(device_id: UUID, body: DeleteBody):
-    success = await device_service.delete_device(device_id, body.applied_by_id)
+async def delete_device(device_id: UUID):
+    success = await device_service.delete_device(device_id)
     if not success:
         raise HTTPException(status_code=404, detail="Device not found")
 
