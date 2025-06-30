@@ -3,7 +3,9 @@ from enum import Enum
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
+
+from .user import User
 
 
 class ActionState(str, Enum):
@@ -44,9 +46,17 @@ class ActionInDB(ActionBase):
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
-class ActionResponse(ActionInDB):
-    pass
+class ActionResponse(BaseModel):
+    action_id: UUID
+    device_id: UUID
+    state: ActionState
+    action: ActionType
+    description: Optional[str] = None
+    created_at: datetime
+    updated_at: datetime
+    applied_by: User
+
+    model_config = ConfigDict(from_attributes=True)
