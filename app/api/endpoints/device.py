@@ -35,8 +35,8 @@ async def create_device(device_in: DeviceCreate):
 
 
 @router.get("/", response_model=List[DeviceDB])
-async def get_all_devices():
-    return await device_service.get_devices()
+async def get_all_devices(enrollment_id: Optional[str] = Query(None)):
+    return await device_service.get_devices(enrollment_id=enrollment_id)
 
 
 @router.get("/{device_id}", response_model=DeviceDB)

@@ -23,10 +23,14 @@ async def get_device(device_id: UUID) -> Optional[DeviceDB]:
     return None
 
 
-async def get_devices() -> List[DeviceDB]:
+async def get_devices(enrollment_id: Optional[str] = None) -> List[DeviceDB]:
+    params = {}
+    if enrollment_id:
+        params["enrollment_id"] = enrollment_id
+
     async with httpx.AsyncClient() as client:
         url = f"{USER_SVC_URL}{DEVICE_API_PREFIX}/devices/"
-        resp = await client.get(url, headers=INTERNAL_HDR)
+        resp = await client.get(url, headers=INTERNAL_HDR, params=params or None)
     if resp.status_code == 200:
         return [DeviceDB(**item) for item in resp.json()]
     return []
