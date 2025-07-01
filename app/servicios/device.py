@@ -27,7 +27,7 @@ async def get_device(device_id: UUID) -> Optional[DeviceDB]:
 async def get_devices(enrollment_id: Optional[str] = None) -> List[DeviceDB]:
     params = {}
     if enrollment_id:
-        params["enrollment_id"] = enrollment_id
+        params["enrolment_id"] = enrollment_id
 
     async with httpx.AsyncClient() as client:
         url = f"{USER_SVC_URL}{DEVICE_API_PREFIX}/devices/"
