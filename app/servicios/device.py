@@ -4,6 +4,7 @@ from uuid import UUID
 
 import httpx
 from fastapi import HTTPException
+from httpx import HTTPStatusError
 
 from app.models.device import DeviceCreate, DeviceDB, DeviceUpdate
 
@@ -37,31 +38,43 @@ async def get_devices(enrollment_id: Optional[str] = None) -> List[DeviceDB]:
 
 
 async def create_device(device_in: DeviceCreate) -> DeviceDB:
-    async with httpx.AsyncClient() as client:
-        url = f"{USER_SVC_URL}{DEVICE_API_PREFIX}/devices/"
-        resp = await client.post(
-            url, headers=INTERNAL_HDR, json=device_in.model_dump(mode="json")
-        )
-
-    if resp.status_code == 400:
-        raise HTTPException(
-            status_code=400, detail="enrollment id must be unique per device"
-        )
-
-    resp.raise_for_status()
-    new_device = DeviceDB(**resp.json())
-
-    # TODO: Resolve how to log this action. The ActionCreate model requires an
-    # 'applied_by_id', but device creation may not have a user context.
-
-    return new_device
+    try:
+        async with httpx.AsyncClient() as client:
+            url = f"{USER_SVC_URL}{DEVICE_API_PREFIX}/devices/"
+            resp = await client.post(
+                url,
+                headers=INTERNAL_HDR,
+                content=device_in.model_dump_json(exclude_unset=True),
+            )
+            resp.raise_for_status()
+        return DeviceDB(**resp.json())
+    except HTTPStatusError as e:
+        if e.response.status_code == 409:
+            try:
+                detail = e.response.json().get("detail", e.response.text)
+            except Exception:
+                detail = e.response.text
+            raise HTTPException(
+                status_code=409, detail=f"Device already exists: {detail}"
+            )
+        elif e.response.status_code == 400:
+            try:
+                detail = e.response.json().get("detail", e.response.text)
+            except Exception:
+                detail = e.response.text
+            raise HTTPException(
+                status_code=400, detail=f"Invalid data provided: {detail}"
+            )
+        raise e
 
 
 async def update_device(device_id: UUID, device_in: DeviceUpdate) -> Optional[DeviceDB]:
     async with httpx.AsyncClient() as client:
         url = f"{USER_SVC_URL}{DEVICE_API_PREFIX}/devices/{device_id}"
         resp = await client.patch(
-            url, headers=INTERNAL_HDR, json=device_in.model_dump(exclude_unset=True)
+            url,
+            headers=INTERNAL_HDR,
+            content=device_in.model_dump_json(exclude_unset=True),
         )
 
     if resp.status_code == 200:
