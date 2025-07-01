@@ -1,6 +1,7 @@
 from typing import List, Optional
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from app.auth.dependencies import get_current_user
@@ -12,7 +13,12 @@ router = APIRouter()
 
 @router.post("/", response_model=User, status_code=status.HTTP_201_CREATED)
 async def create_user(user_in: UserCreate):
-    return await user_service.create_user(user_in)
+    try:
+        return await user_service.create_user(user_in)
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code, detail=e.response.json().get("detail")
+        )
 
 
 @router.get("/me", response_model=User)

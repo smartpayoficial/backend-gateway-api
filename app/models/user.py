@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, EmailStr
+from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
 from .city import CityDB
 from .role import Role
@@ -11,9 +11,9 @@ from .role import Role
 class UserBase(BaseModel):
     email: EmailStr
     username: str
-    first_name: str
-    last_name: str
-    dni: str
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    dni: Optional[str] = None
 
     middle_name: Optional[str] = None
     second_last_name: Optional[str] = None
@@ -27,6 +27,13 @@ class UserCreate(UserBase):
     city_id: Optional[UUID] = None
     role_id: Optional[UUID] = None
     password: str
+
+    @field_validator("city_id", "role_id", mode="before")
+    @classmethod
+    def to_uuid(cls, v):
+        if isinstance(v, str):
+            return UUID(v)
+        return v
 
 
 class UserUpdate(BaseModel):
@@ -50,7 +57,7 @@ class User(UserBase):
     model_config = ConfigDict(from_attributes=True)
 
     user_id: UUID
-    created_at: datetime
-    updated_at: datetime
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
     role: Role
     city: Optional[CityDB] = None

@@ -1,3 +1,4 @@
+import logging
 import os
 from typing import List, Optional
 from uuid import UUID
@@ -54,8 +55,21 @@ async def create_user(user_in: UserCreate) -> User:
         resp = await client.post(
             url, headers=INTERNAL_HDR, json=user_in.model_dump(mode="json")
         )
+
+    if resp.is_client_error or resp.is_server_error:
+        logging.error(f"User service returned an error: {resp.status_code} {resp.text}")
     resp.raise_for_status()
-    return User(**resp.json())
+
+    response_data = resp.json()
+    new_user_id = response_data.get("user_id")
+    if not new_user_id:
+        raise Exception("User service did not return a user_id after creation.")
+
+    created_user = await get_user(new_user_id)
+    if not created_user:
+        raise Exception(f"Could not retrieve user {new_user_id} after creation.")
+
+    return created_user
 
 
 async def update_user(user_id: UUID, user: UserUpdate) -> Optional[User]:
