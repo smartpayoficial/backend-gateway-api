@@ -6,6 +6,7 @@ from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
 # Importar el manager y la función de servicio refactorizada
+from app.models.action import ActionType
 from app.services.socket_service import manager, send_and_log_action
 
 router = APIRouter()
@@ -22,10 +23,17 @@ class ActionBody(BaseModel):
     payload: Optional[Dict[str, Any]] = None
 
 
+@router.post("/action/{device_id}/block", tags=["Device Actions"])
+async def action_block(device_id: UUID, body: ActionBody):
+    return await send_and_log_action(
+        device_id, ActionType.BLOCK, body.applied_by_id, body.payload
+    )
+
+
 @router.post("/action/{device_id}/block_sim", tags=["Device Actions"])
 async def action_block_sim(device_id: UUID, body: ActionBody):
     return await send_and_log_action(
-        device_id, "BLOCK_SIM", body.applied_by_id, body.payload
+        device_id, ActionType.BLOCK_SIM, body.applied_by_id, body.payload
     )
 
 
@@ -57,10 +65,17 @@ async def action_unenroll(device_id: UUID, body: ActionBody):
     )
 
 
+@router.post("/action/{device_id}/unblock", tags=["Device Actions"])
+async def action_unblock(device_id: UUID, body: ActionBody):
+    return await send_and_log_action(
+        device_id, ActionType.UN_BLOCK, body.applied_by_id, body.payload
+    )
+
+
 @router.post("/action/{device_id}/unblock_sim", tags=["Device Actions"])
 async def action_unblock_sim(device_id: UUID, body: ActionBody):
     return await send_and_log_action(
-        device_id, "UNBLOCK_SIM", body.applied_by_id, body.payload
+        device_id, ActionType.UNBLOCK_SIM, body.applied_by_id, body.payload
     )
 
 
