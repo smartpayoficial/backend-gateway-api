@@ -22,6 +22,8 @@ class ActionType(str, Enum):
     UN_ENROLL = "unenroll"
     UN_BLOCK = "unblock"
     EXCEPTION = "exception"
+    BLOCK_SIM = "block_sim"
+    UNBLOCK_SIM = "unblock_sim"
 
 
 class ActionBase(BaseModel):

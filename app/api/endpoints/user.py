@@ -6,7 +6,7 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 
 from app.auth.dependencies import get_current_user
 from app.models.user import User, UserCreate, UserUpdate
-from app.servicios import user as user_service
+from app.services import user as user_service
 
 router = APIRouter()
 

@@ -8,8 +8,8 @@ from app.models.device import DeviceCreate, DeviceDB, DeviceUpdate
 
 # Imports for Location
 from app.models.location import LocationCreate, LocationDB
-from app.servicios import device as device_service
-from app.servicios import location as location_service
+from app.services import device as device_service
+from app.services import location as location_service
 
 router = APIRouter()
 

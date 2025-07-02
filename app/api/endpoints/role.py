@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Response, status
 
 from app.models.role import Role, RoleCreate, RoleUpdate
-from app.servicios import role as role_service
+from app.services import role as role_service
 
 router = APIRouter()
 

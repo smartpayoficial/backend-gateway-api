@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, status
 
 from app.models.enrolment import EnrolmentCreate, EnrolmentDB
-from app.servicios import enrolment as enrolment_service
+from app.services import enrolment as enrolment_service
 
 router = APIRouter()
 

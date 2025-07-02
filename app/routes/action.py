@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Query, Response, status
 
 from app.models.action import ActionCreate, ActionResponse, ActionState, ActionUpdate
-from app.servicios import action as action_service
+from app.services import action as action_service
 
 router = APIRouter()
 

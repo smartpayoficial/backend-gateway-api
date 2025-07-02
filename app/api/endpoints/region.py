@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Path, status
 
 from app.models.location import RegionCreate, RegionDB, RegionUpdate
-from app.servicios import location as location_service
+from app.services import location as location_service
 
 router = APIRouter()
 

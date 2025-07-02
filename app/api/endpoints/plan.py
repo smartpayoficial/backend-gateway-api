@@ -7,7 +7,7 @@ from fastapi import APIRouter, File, Form, HTTPException, Path, UploadFile, stat
 from fastapi.responses import FileResponse, JSONResponse
 
 from app.models.plan import Plan, PlanCreate, PlanDB, PlanRaw, PlanUpdate
-from app.servicios import plan as plan_service
+from app.services import plan as plan_service
 
 router = APIRouter()
 

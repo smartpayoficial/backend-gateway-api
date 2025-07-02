@@ -4,7 +4,7 @@ from uuid import UUID
 from fastapi import APIRouter, HTTPException, Query, Response, status
 
 from app.models.payment import Payment, PaymentCreate, PaymentState, PaymentUpdate
-from app.servicios import payment as payment_service
+from app.services import payment as payment_service
 
 router = APIRouter(tags=["payments"])
 
