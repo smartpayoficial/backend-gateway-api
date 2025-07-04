@@ -40,12 +40,11 @@ async def get_country_by_id(country_id: UUID = Path(...)):
     return country
 
 
-@router.patch("/{country_id}", response_model=CountryDB)
+@router.patch("/{country_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_country(country_id: UUID, country_in: CountryUpdate):
-    country = await location_service.update_country(country_id, country_in)
-    if not country:
+    success = await location_service.update_country(country_id, country_in)
+    if not success:
         raise HTTPException(status_code=404, detail="Country not found")
-    return country
 
 
 @router.delete("/{country_id}", status_code=status.HTTP_204_NO_CONTENT)

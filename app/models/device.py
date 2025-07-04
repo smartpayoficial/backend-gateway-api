@@ -50,7 +50,7 @@ class Device(BaseModel):
     brand: str
     product_name: str
     state: str
-    enrolment: Enrolment
+    enrolment: Optional[Enrolment] = None
 
     model_config = ConfigDict(from_attributes=True)
 

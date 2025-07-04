@@ -80,14 +80,12 @@ async def get_country(country_id: UUID) -> Optional[CountryDB]:
             return CountryDB(**response.json())
         return None
 
-async def update_country(country_id: UUID, country_in: CountryUpdate) -> Optional[CountryDB]:
+async def update_country(country_id: UUID, country_in: CountryUpdate) -> bool:
     async with httpx.AsyncClient() as client:
         response = await client.patch(
             f"{USER_SVC_URL}/api/v1/countries/{country_id}", json=country_in.model_dump(mode='json', exclude_unset=True)
         )
-        if response.status_code == 200:
-            return CountryDB(**response.json())
-        return None
+        return response.status_code in (200, 204)
 
 async def delete_country(country_id: UUID) -> bool:
     async with httpx.AsyncClient() as client:
