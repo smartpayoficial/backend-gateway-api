@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, field_validator
 from tortoise import fields
 from tortoise.models import Model
 
@@ -55,32 +55,47 @@ class Location(Model):
 
 # Schemas for Country
 class CountryBase(BaseModel):
-    code: int
+    code: str
     name: str
-    prefix: str
+    prefix: Optional[str] = None
 
 
 class CountryCreate(CountryBase):
-    pass
+    @field_validator("code")
+    @classmethod
+    def validate_code(cls, v: str) -> str:
+        if len(v) > 3:
+            raise ValueError("Country code must be 3 characters or less.")
+        return v
 
 
 class CountryUpdate(BaseModel):
-    code: Optional[int] = None
+    code: Optional[str] = None
     name: Optional[str] = None
     prefix: Optional[str] = None
+
+    @field_validator("code")
+    @classmethod
+    def validate_code(cls, v: Optional[str]) -> Optional[str]:
+        if v is None:
+            return v
+        if len(v) > 3:
+            raise ValueError("Country code must be 3 characters or less.")
+        return v
 
 
 class CountryDB(CountryBase):
     country_id: UUID
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True, json_encoders={UUID: str})
 
 
 # Schemas for Region
 class RegionBase(BaseModel):
     name: str
     country_id: UUID
+
+    model_config = ConfigDict(json_encoders={UUID: str})
 
 
 class RegionCreate(RegionBase):
@@ -95,14 +110,15 @@ class RegionDB(RegionBase):
     region_id: UUID
     country: Optional[CountryDB] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Schemas for City
 class CityBase(BaseModel):
     name: str
     region_id: Optional[UUID] = None
+
+    model_config = ConfigDict(json_encoders={UUID: str})
 
 
 class CityCreate(CityBase):
@@ -113,13 +129,14 @@ class CityUpdate(BaseModel):
     name: Optional[str] = None
     region_id: Optional[UUID] = None
 
+    model_config = ConfigDict(json_encoders={UUID: str})
+
 
 class CityDB(CityBase):
     city_id: UUID
     region: Optional[RegionDB] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 # Schemas for Location
@@ -127,6 +144,8 @@ class LocationBase(BaseModel):
     device_id: UUID
     latitude: float
     longitude: float
+
+    model_config = ConfigDict(json_encoders={UUID: str})
 
 
 class LocationCreate(LocationBase):
@@ -137,5 +156,4 @@ class LocationDB(LocationBase):
     location_id: UUID
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

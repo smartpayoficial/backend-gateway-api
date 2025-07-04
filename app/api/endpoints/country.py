@@ -1,6 +1,7 @@
 from typing import List
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, HTTPException, Path, status
 
 from app.models.location import CountryCreate, CountryDB, CountryUpdate
@@ -11,12 +12,24 @@ router = APIRouter()
 
 @router.post("/", response_model=CountryDB, status_code=status.HTTP_201_CREATED)
 async def create_country(country_in: CountryCreate):
-    return await location_service.create_country(country_in)
+    country = await location_service.create_country(country_in)
+    if not country:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Country could not be created.",
+        )
+    return country
 
 
 @router.get("/", response_model=List[CountryDB])
 async def get_all_countries():
-    return await location_service.get_countries()
+    try:
+        return await location_service.get_countries()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Error from downstream service: {e.response.text}",
+        )
 
 
 @router.get("/{country_id}", response_model=CountryDB)

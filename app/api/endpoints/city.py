@@ -11,12 +11,24 @@ router = APIRouter()
 
 @router.post("/", response_model=CityDB, status_code=status.HTTP_201_CREATED)
 async def create_city(city_in: CityCreate):
-    return await location_service.create_city(city_in)
+    city = await location_service.create_city(city_in)
+    if not city:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="City could not be created.",
+        )
+    return city
 
 
 @router.get("/", response_model=List[CityDB])
 async def get_all_cities():
-    return await location_service.get_cities()
+    try:
+        return await location_service.get_cities()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Error from downstream service: {e.response.text}",
+        )
 
 
 @router.get("/{city_id}", response_model=CityDB)

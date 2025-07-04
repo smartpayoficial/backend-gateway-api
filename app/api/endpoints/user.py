@@ -36,7 +36,13 @@ async def read_user_by_id(user_id: UUID):
 
 @router.get("/", response_model=List[User])
 async def read_users(role_name: Optional[str] = None, state: Optional[str] = None):
-    return await user_service.get_users(role_name=role_name, state=state)
+    try:
+        return await user_service.get_users(role_name=role_name, state=state)
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Error from downstream service: {e.response.text}",
+        )
 
 
 @router.patch("/{user_id}", response_model=User)

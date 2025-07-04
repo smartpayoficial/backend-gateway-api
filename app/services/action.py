@@ -99,7 +99,7 @@ async def update_action(
     async with httpx.AsyncClient() as client:
         try:
             response = await client.patch(
-                url, json=action_in.model_dump(exclude_unset=True), headers=INTERNAL_HDR
+                url, json=action_in.model_dump(mode='json', exclude_unset=True), headers=INTERNAL_HDR
             )
             response.raise_for_status()
             return ActionResponse(**response.json())

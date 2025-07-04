@@ -1,6 +1,7 @@
 from typing import List
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, HTTPException, Path, status
 
 from app.models.location import RegionCreate, RegionDB, RegionUpdate
@@ -11,12 +12,24 @@ router = APIRouter()
 
 @router.post("/", response_model=RegionDB, status_code=status.HTTP_201_CREATED)
 async def create_region(region_in: RegionCreate):
-    return await location_service.create_region(region_in)
+    region = await location_service.create_region(region_in)
+    if not region:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Region could not be created.",
+        )
+    return region
 
 
 @router.get("/", response_model=List[RegionDB])
 async def get_all_regions():
-    return await location_service.get_regions()
+    try:
+        return await location_service.get_regions()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Error from downstream service: {e.response.text}",
+        )
 
 
 @router.get("/{region_id}", response_model=RegionDB)

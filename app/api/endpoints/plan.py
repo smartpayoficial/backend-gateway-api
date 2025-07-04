@@ -3,6 +3,7 @@ import shutil
 from typing import List
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, File, Form, HTTPException, Path, UploadFile, status
 from fastapi.responses import FileResponse, JSONResponse
 
@@ -48,12 +49,24 @@ async def download_plan_pdf(plan_id: str):
 
 @router.post("/", response_model=Plan, status_code=status.HTTP_201_CREATED)
 async def create_plan(new_plan: PlanCreate):
-    return await plan_service.create_plan(new_plan)
+    plan = await plan_service.create_plan(new_plan)
+    if not plan:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Plan could not be created.",
+        )
+    return plan
 
 
 @router.get("/", response_model=List[PlanRaw], status_code=status.HTTP_200_OK)
 async def get_all_plans():
-    return await plan_service.get_all_plans()
+    try:
+        return await plan_service.get_all_plans()
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Error from downstream service: {e.response.text}",
+        )
 
 
 @router.get("/{plan_id}", response_model=PlanRaw, status_code=status.HTTP_200_OK)

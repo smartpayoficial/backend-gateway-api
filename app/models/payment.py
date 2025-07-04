@@ -4,7 +4,7 @@ from enum import Enum
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from .device import Device
 from .plan import Plan
@@ -43,8 +43,7 @@ class PlanUpdate(BaseModel):
 class PlanDB(PlanBase):
     plan_id: UUID
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class Payment(BaseModel):
@@ -57,8 +56,7 @@ class Payment(BaseModel):
     device: Device
     plan: Plan
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class PaymentCreate(BaseModel):

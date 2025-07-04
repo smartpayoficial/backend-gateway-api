@@ -33,6 +33,12 @@ class ActionBase(BaseModel):
     action: ActionType
     description: Optional[str] = None
 
+    model_config = ConfigDict(
+        json_encoders={
+            UUID: str
+        }
+    )
+
 
 class ActionCreate(ActionBase):
     pass

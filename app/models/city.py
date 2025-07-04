@@ -1,7 +1,7 @@
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict, Field
 
 
 class CityBase(BaseModel):
@@ -19,6 +19,4 @@ class CityUpdate(CityBase):
 
 class CityDB(CityBase):
     city_id: UUID
-
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

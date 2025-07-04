@@ -2,7 +2,7 @@ from enum import Enum
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, ConfigDict, field_validator
 
 from .enrolment import Enrolment
 
@@ -52,8 +52,8 @@ class Device(BaseModel):
     state: str
     enrolment: Enrolment
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 
 class DeviceDB(DeviceBase):
@@ -70,5 +70,4 @@ class DeviceDB(DeviceBase):
     device_id: UUID
     enrolment_id: UUID
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

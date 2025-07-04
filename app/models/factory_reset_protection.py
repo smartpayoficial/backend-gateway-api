@@ -1,8 +1,9 @@
+from datetime import datetime
 from enum import Enum
 from typing import Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class FactoryResetProtectionState(str, Enum):
@@ -28,9 +29,10 @@ class FactoryResetProtectionUpdate(BaseModel):
 
 class FactoryResetProtectionInDB(FactoryResetProtectionBase):
     factory_reset_protection_id: UUID
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class FactoryResetProtectionResponse(FactoryResetProtectionInDB):

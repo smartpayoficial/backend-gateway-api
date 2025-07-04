@@ -1,9 +1,9 @@
 from datetime import datetime
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
-from .user import User
+
 
 
 class EnrolmentBase(BaseModel):
@@ -22,15 +22,14 @@ class EnrolmentUpdate(BaseModel):
 
 class Enrolment(EnrolmentBase):
     enrolment_id: UUID
-    user: User
-    vendor: User
+    user_id: UUID
+    vendor_id: UUID
     created_at: datetime
     updated_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
+
 
 
 class EnrolmentDB(Enrolment):
-    class Config:
-        orm_mode = True
+    model_config = ConfigDict(from_attributes=True)

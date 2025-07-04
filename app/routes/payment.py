@@ -1,6 +1,7 @@
 from typing import List, Optional
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, HTTPException, Query, Response, status
 
 from app.models.payment import Payment, PaymentCreate, PaymentState, PaymentUpdate
@@ -11,7 +12,13 @@ router = APIRouter(tags=["payments"])
 
 @router.post("/", response_model=Payment)
 async def create_payment(payment: PaymentCreate):
-    return await payment_service.create_payment(payment)
+    new_payment = await payment_service.create_payment(payment)
+    if not new_payment:
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST,
+            detail="Payment could not be created.",
+        )
+    return new_payment
 
 
 @router.get("/", response_model=List[Payment])
@@ -19,7 +26,13 @@ async def get_payments(
     state: Optional[PaymentState] = Query(None),
     plan_id: Optional[UUID] = Query(None),
 ):
-    return await payment_service.get_payments(state=state, plan_id=plan_id)
+    try:
+        return await payment_service.get_payments(state=state, plan_id=plan_id)
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Error from downstream service: {e.response.text}",
+        )
 
 
 @router.get("/{payment_id}", response_model=Payment)
