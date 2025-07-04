@@ -5,7 +5,7 @@ from uuid import UUID
 
 import httpx
 from fastapi import APIRouter, File, Form, HTTPException, Path, UploadFile, status
-from fastapi.responses import FileResponse, JSONResponse
+from fastapi.responses import FileResponse
 
 from app.models.plan import Plan, PlanCreate, PlanDB, PlanRaw, PlanUpdate
 from app.services import plan as plan_service
@@ -79,6 +79,9 @@ async def get_plan_by_id(plan_id: UUID = Path(...)):
 
 @router.patch("/{plan_id}", response_model=PlanDB, status_code=status.HTTP_200_OK)
 async def update_plan(plan_id: UUID, plan_update: PlanUpdate):
+    # Print the incoming update data for debugging
+    print(f"Received plan update request: {plan_update.model_dump()}")
+
     updated = await plan_service.update_plan(plan_id, plan_update)
     if not updated:
         raise HTTPException(status_code=404, detail="Plan not found")
@@ -90,4 +93,5 @@ async def delete_plan(plan_id: UUID = Path(...)):
     deleted = await plan_service.delete_plan(plan_id)
     if not deleted:
         raise HTTPException(status_code=404, detail="Plan not found")
-    return JSONResponse(status_code=status.HTTP_204_NO_CONTENT)
+    # For 204 No Content, return None instead of JSONResponse
+    return None

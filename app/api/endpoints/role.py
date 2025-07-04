@@ -22,7 +22,7 @@ async def list_roles(name: Optional[str] = None):
         )
 
 
-@router.get("/{role_id}/", response_model=Role)
+@router.get("/{role_id}", response_model=Role)
 async def get_role(role_id: UUID):
     """Obtiene un rol por su ID."""
     role = await role_service.get_role(role_id)
@@ -42,20 +42,20 @@ async def create_role_endpoint(role: RoleCreate):
     return new_role
 
 
-@router.patch("/{role_id}/", status_code=status.HTTP_204_NO_CONTENT)
+@router.patch("/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def update_role_endpoint(role_id: UUID, role: RoleUpdate):
     """Actualiza un rol existente."""
     updated_ok = await role_service.update_role(role_id, role)
     if not updated_ok:
-        raise HTTPException(
-            status_code=404, detail="Role not found or not updated"
-        )
+        raise HTTPException(status_code=404, detail="Role not found or not updated")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
 
 
-@router.delete("/{role_id}/", status_code=status.HTTP_204_NO_CONTENT)
+@router.delete("/{role_id}", status_code=status.HTTP_204_NO_CONTENT)
 async def delete_role_endpoint(role_id: UUID):
     """Elimina un rol por su ID."""
     ok = await role_service.delete_role(role_id)
     if not ok:
         raise HTTPException(status_code=404, detail="Rol no encontrado")
+    # For 204 No Content, return None
+    return None

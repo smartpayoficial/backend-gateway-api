@@ -53,10 +53,14 @@ class Payment(BaseModel):
     state: PaymentState
     date: datetime
     reference: str
-    device: Device
-    plan: Plan
+    device: Optional[Device] = None
+    plan: Optional[Plan] = None
 
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        extra="ignore",  # Ignore extra fields
+        arbitrary_types_allowed=True,  # Allow arbitrary types
+    )
 
 
 class PaymentCreate(BaseModel):

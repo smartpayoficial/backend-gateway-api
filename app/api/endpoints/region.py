@@ -40,8 +40,11 @@ async def get_region_by_id(region_id: UUID = Path(...)):
     return region
 
 
-@router.patch("/{region_id}", response_model=RegionDB)
+@router.patch("/{region_id}", response_model=RegionDB, status_code=status.HTTP_200_OK)
 async def update_region(region_id: UUID, region_in: RegionUpdate):
+    # Print the incoming update data for debugging
+    print(f"Received region update request: {region_in.model_dump()}")
+
     region = await location_service.update_region(region_id, region_in)
     if not region:
         raise HTTPException(status_code=404, detail="Region not found")
@@ -53,3 +56,5 @@ async def delete_region(region_id: UUID):
     success = await location_service.delete_region(region_id)
     if not success:
         raise HTTPException(status_code=404, detail="Region not found")
+    # For 204 No Content, return None instead of JSONResponse
+    return None
