@@ -35,6 +35,15 @@ async def get_factory_reset_protections(
         response.raise_for_status()
         return [FactoryResetProtectionResponse(**item) for item in response.json()]
 
+async def get_factory_reset_protection_by_account(
+    account_id: str
+)  -> Optional[FactoryResetProtectionResponse]:
+    async with httpx.AsyncClient() as client:
+        response = await client.get(f"{FRP_API_URL}/accountId/{account_id}")
+        if response.status_code == 200:
+            return FactoryResetProtectionResponse(**response.json())
+        return None
+
 
 async def get_factory_reset_protection(
     frp_id: UUID,
