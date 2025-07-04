@@ -49,7 +49,7 @@ class Device(BaseModel):
     model: str
     brand: str
     product_name: str
-    state: str
+    state: Optional[str] = None
     enrolment: Optional[Enrolment] = None
 
     model_config = ConfigDict(

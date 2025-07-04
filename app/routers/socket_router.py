@@ -1,13 +1,11 @@
 from datetime import datetime
-from typing import Any, Dict, Optional
-from uuid import UUID
+from typing import Optional
 
 from fastapi import APIRouter, HTTPException
 from pydantic import BaseModel
 
-# Importar el manager y la función de servicio refactorizada
-from app.models.action import ActionType
-from app.services.socket_service import manager, send_and_log_action
+# Importar el manager de la función de servicio
+from app.services.socket_service import manager
 
 router = APIRouter()
 
@@ -16,74 +14,6 @@ class MessageRequest(BaseModel):
     message: str
     sender_id: Optional[str] = None
     room_id: str  # obligatorio
-
-
-class ActionBody(BaseModel):
-    applied_by_id: UUID
-    payload: Optional[Dict[str, Any]] = None
-
-
-@router.post("/action/{device_id}/block", tags=["Device Actions"])
-async def action_block(device_id: UUID, body: ActionBody):
-    return await send_and_log_action(
-        device_id, ActionType.BLOCK, body.applied_by_id, body.payload
-    )
-
-
-@router.post("/action/{device_id}/block_sim", tags=["Device Actions"])
-async def action_block_sim(device_id: UUID, body: ActionBody):
-    return await send_and_log_action(
-        device_id, ActionType.BLOCK_SIM, body.applied_by_id, body.payload
-    )
-
-
-@router.post("/action/{device_id}/locate", tags=["Device Actions"])
-async def action_locate(device_id: UUID, body: ActionBody):
-    return await send_and_log_action(
-        device_id, "locate", body.applied_by_id, body.payload
-    )
-
-
-@router.post("/action/{device_id}/refresh", tags=["Device Actions"])
-async def action_refresh(device_id: UUID, body: ActionBody):
-    return await send_and_log_action(
-        device_id, "refresh", body.applied_by_id, body.payload
-    )
-
-
-@router.post("/action/{device_id}/notify", tags=["Device Actions"])
-async def action_notify(device_id: UUID, body: ActionBody):
-    return await send_and_log_action(
-        device_id, "notify", body.applied_by_id, body.payload
-    )
-
-
-@router.post("/action/{device_id}/unenroll", tags=["Device Actions"])
-async def action_unenroll(device_id: UUID, body: ActionBody):
-    return await send_and_log_action(
-        device_id, "unenroll", body.applied_by_id, body.payload
-    )
-
-
-@router.post("/action/{device_id}/unblock", tags=["Device Actions"])
-async def action_unblock(device_id: UUID, body: ActionBody):
-    return await send_and_log_action(
-        device_id, ActionType.UN_BLOCK, body.applied_by_id, body.payload
-    )
-
-
-@router.post("/action/{device_id}/unblock_sim", tags=["Device Actions"])
-async def action_unblock_sim(device_id: UUID, body: ActionBody):
-    return await send_and_log_action(
-        device_id, ActionType.UNBLOCK_SIM, body.applied_by_id, body.payload
-    )
-
-
-@router.post("/action/{device_id}/exception", tags=["Device Actions"])
-async def action_exception(device_id: UUID, body: ActionBody):
-    return await send_and_log_action(
-        device_id, "exception", body.applied_by_id, body.payload
-    )
 
 
 @router.get("/connections", tags=["Monitoring"])

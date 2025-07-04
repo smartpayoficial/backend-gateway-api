@@ -4,13 +4,14 @@ from uuid import UUID
 import httpx
 from fastapi import APIRouter, HTTPException, Query, Response, status
 
-from app.models.payment import Payment, PaymentCreate, PaymentState, PaymentUpdate
+from app.models.payment import PaymentCreate, PaymentState, PaymentUpdate
+from app.models.payment_response import PaymentResponse
 from app.services import payment as payment_service
 
 router = APIRouter(tags=["payments"])
 
 
-@router.post("/", response_model=Payment)
+@router.post("/", response_model=PaymentResponse)
 async def create_payment(payment: PaymentCreate):
     new_payment = await payment_service.create_payment(payment)
     if not new_payment:
@@ -21,13 +22,16 @@ async def create_payment(payment: PaymentCreate):
     return new_payment
 
 
-@router.get("/", response_model=List[Payment])
+@router.get("/", response_model=List[PaymentResponse])
 async def get_payments(
     state: Optional[PaymentState] = Query(None),
     plan_id: Optional[UUID] = Query(None),
+    device_id: Optional[UUID] = Query(None),
 ):
     try:
-        return await payment_service.get_payments(state=state, plan_id=plan_id)
+        return await payment_service.get_payments(
+            state=state, plan_id=plan_id, device_id=device_id
+        )
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=e.response.status_code,
@@ -35,7 +39,7 @@ async def get_payments(
         )
 
 
-@router.get("/{payment_id}", response_model=Payment)
+@router.get("/{payment_id}", response_model=PaymentResponse)
 async def get_payment(payment_id: UUID):
     payment = await payment_service.get_payment(payment_id)
     if not payment:
@@ -43,7 +47,7 @@ async def get_payment(payment_id: UUID):
     return payment
 
 
-@router.patch("/{payment_id}", response_model=Payment)
+@router.patch("/{payment_id}", response_model=PaymentResponse)
 async def update_payment(payment_id: UUID, payment: PaymentUpdate):
     updated = await payment_service.update_payment(payment_id, payment)
     if not updated:

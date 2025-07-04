@@ -80,7 +80,7 @@ manager = ConnectionManager()
 
 async def send_and_log_action(
     device_id: UUID, command: str, applied_by_id: UUID, payload: Optional[dict] = None
-):
+) -> JSONResponse:
     """
     Logs an action and sends it to a device if connected.
     - If the device is connected, sends the command and returns a 200 OK response.

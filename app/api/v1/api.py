@@ -5,6 +5,7 @@ from app.api.endpoints import (
     city,
     country,
     device,
+    device_action,
     enrolment,
     plan,
     region,
@@ -21,6 +22,9 @@ api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(city.router, prefix="/cities", tags=["cities"])
 api_router.include_router(country.router, prefix="/countries", tags=["countries"])
 api_router.include_router(device.router, prefix="/devices", tags=["devices"])
+api_router.include_router(
+    device_action.router, prefix="/device-actions", tags=["device-actions"]
+)
 api_router.include_router(socket_router.router)
 api_router.include_router(enrolment.router, prefix="/enrolments", tags=["enrolments"])
 api_router.include_router(

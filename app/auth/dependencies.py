@@ -55,7 +55,7 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
 
 def role_checker(allowed: list[str]):
     async def _checker(user: User = Depends(get_current_user)):
-        if user.role.name not in allowed:
+        if user.role is None or user.role.name not in allowed:
             raise HTTPException(
                 status_code=status.HTTP_403_FORBIDDEN, detail="Permiso denegado"
             )

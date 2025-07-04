@@ -54,10 +54,14 @@ class UserUpdate(BaseModel):
 
 
 class User(UserBase):
-    model_config = ConfigDict(from_attributes=True)
+    model_config = ConfigDict(
+        from_attributes=True,
+        extra="ignore",  # Ignore extra fields
+        arbitrary_types_allowed=True,  # Allow arbitrary types
+    )
 
     user_id: UUID
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
-    role: Role
+    role: Optional[Role] = None
     city: Optional[CityDB] = None
