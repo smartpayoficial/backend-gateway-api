@@ -6,7 +6,7 @@ import httpx
 from app.models.role import Role, RoleCreate, RoleUpdate
 
 USER_SVC_URL = os.getenv("USER_SVC_URL", "http://localhost:8002")
-ROLE_API_URL = f"{USER_SVC_URL}/api/v1/roles"
+ROLE_API_URL = f"{USER_SVC_URL}/api/v1/roles/"
 
 
 async def get_roles(name: Optional[str] = None) -> List[Role]:
@@ -21,7 +21,7 @@ async def get_roles(name: Optional[str] = None) -> List[Role]:
 
 async def get_role(role_id: UUID) -> Optional[Role]:
     async with httpx.AsyncClient() as client:
-        response = await client.get(f"{ROLE_API_URL}/{role_id}")
+        response = await client.get(f"{ROLE_API_URL}{role_id}/")
         if response.status_code == 200:
             return Role(**response.json())
         return None
@@ -38,7 +38,7 @@ async def create_role(role_in: RoleCreate) -> Optional[Role]:
 async def update_role(role_id: UUID, role_update: RoleUpdate) -> bool:
     async with httpx.AsyncClient() as client:
         response = await client.patch(
-            f"{ROLE_API_URL}/{role_id}",
+            f"{ROLE_API_URL}{role_id}/",
             json=role_update.model_dump(mode="json", exclude_unset=True),
         )
         return response.status_code == 204
@@ -46,5 +46,5 @@ async def update_role(role_id: UUID, role_update: RoleUpdate) -> bool:
 
 async def delete_role(role_id: UUID) -> bool:
     async with httpx.AsyncClient() as client:
-        response = await client.delete(f"{ROLE_API_URL}/{role_id}")
+        response = await client.delete(f"{ROLE_API_URL}{role_id}/")
         return response.status_code == 204
