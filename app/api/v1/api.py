@@ -13,13 +13,23 @@ from app.api.endpoints import (
     user,
 )
 from app.routers import socket_router
-from app.routes import action, factory_reset_protection, google, payment, sim
+from app.routes import (
+    action,
+    configuration,
+    factory_reset_protection,
+    google,
+    payment,
+    sim,
+)
 
 api_router = APIRouter()
 
 api_router.include_router(action.router, prefix="/actions", tags=["actions"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(city.router, prefix="/cities", tags=["cities"])
+api_router.include_router(
+    configuration.router, prefix="/configurations", tags=["configurations"]
+)
 api_router.include_router(country.router, prefix="/countries", tags=["countries"])
 api_router.include_router(device.router, prefix="/devices", tags=["devices"])
 api_router.include_router(
