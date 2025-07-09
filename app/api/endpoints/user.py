@@ -7,6 +7,11 @@ from fastapi import APIRouter, Depends, HTTPException, Response, status
 from app.auth.dependencies import get_current_user
 from app.models.user import User, UserCreate, UserUpdate
 from app.services import user as user_service
+from app.utils.logger import get_logger
+
+# Configurar el logger para este módulo
+logger = get_logger(__name__)
+
 
 router = APIRouter()
 
@@ -16,8 +21,21 @@ async def create_user(user_in: UserCreate):
     try:
         return await user_service.create_user(user_in)
     except httpx.HTTPStatusError as e:
+        error_detail = e.response.text
+        try:
+            error_json = e.response.json()
+            if "detail" in error_json:
+                error_detail = error_json.get("detail")
+        except Exception:
+            pass
+
+        logger.error(f"Error al crear usuario: {error_detail}", exc_info=True)
+        raise HTTPException(status_code=e.response.status_code, detail=error_detail)
+    except Exception as e:
+        logger.error(f"Error inesperado al crear usuario: {str(e)}", exc_info=True)
         raise HTTPException(
-            status_code=e.response.status_code, detail=e.response.json().get("detail")
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error inesperado: {str(e)}",
         )
 
 
@@ -39,9 +57,24 @@ async def read_users(role_name: Optional[str] = None, state: Optional[str] = Non
     try:
         return await user_service.get_users(role_name=role_name, state=state)
     except httpx.HTTPStatusError as e:
+        error_detail = e.response.text
+        try:
+            error_json = e.response.json()
+            if "detail" in error_json:
+                error_detail = error_json.get("detail")
+        except Exception:
+            pass
+
+        logger.error(f"Error al obtener usuarios: {error_detail}", exc_info=True)
         raise HTTPException(
             status_code=e.response.status_code,
-            detail=f"Error from downstream service: {e.response.text}",
+            detail=f"Error from downstream service: {error_detail}",
+        )
+    except Exception as e:
+        logger.error(f"Error inesperado al obtener usuarios: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error inesperado: {str(e)}",
         )
 
 
