@@ -1,6 +1,6 @@
 import os
 import shutil
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 import httpx
@@ -59,9 +59,9 @@ async def create_plan(new_plan: PlanCreate):
 
 
 @router.get("/", response_model=List[PlanRaw], status_code=status.HTTP_200_OK)
-async def get_all_plans():
+async def get_all_plans(device_id: Optional[UUID] = None):
     try:
-        return await plan_service.get_all_plans()
+        return await plan_service.get_all_plans(device_id=device_id)
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=e.response.status_code,

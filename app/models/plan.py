@@ -97,3 +97,11 @@ class PlanRaw(BaseModel):
     quotas: int
     contract: str
     plan_id: UUID
+    user: Optional[User] = None
+    vendor: Optional[User] = None
+
+    model_config = ConfigDict(
+        from_attributes=True,
+        extra="ignore",  # Ignore extra fields
+        arbitrary_types_allowed=True,  # Allow arbitrary types
+    )
