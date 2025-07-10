@@ -65,3 +65,9 @@ class User(UserBase):
     updated_at: Optional[datetime] = None
     role: Optional[Role] = None
     city: Optional[CityDB] = None
+
+class UserPaymentResponse(BaseModel):
+    first_name: Optional[str] = None
+    last_name: Optional[str] = None
+    middle_name: Optional[str] = None
+    second_last_name: Optional[str] = None

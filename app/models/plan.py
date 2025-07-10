@@ -1,10 +1,12 @@
 from datetime import date
 from typing import Optional
 from uuid import UUID
+from decimal import Decimal
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
-from .user import User
+from .user import UserPaymentResponse
+from .device import DeviceDB
 
 
 class PlanBase(BaseModel):
@@ -50,8 +52,8 @@ class Plan(PlanBase):
     quotas: int
     contract: str
     plan_id: UUID
-    user: Optional[User] = None
-    vendor: Optional[User] = None
+    user: Optional[UserPaymentResponse] = None
+    vendor: Optional[UserPaymentResponse] = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -95,10 +97,12 @@ class PlanRaw(BaseModel):
     device_id: UUID
     initial_date: str
     quotas: int
+    value: Decimal
     contract: str
     plan_id: UUID
-    user: Optional[User] = None
-    vendor: Optional[User] = None
+    user: Optional[UserPaymentResponse] = None
+    vendor: Optional[UserPaymentResponse] = None
+    device: Optional[DeviceDB] = None
 
     model_config = ConfigDict(
         from_attributes=True,
