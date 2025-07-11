@@ -25,6 +25,7 @@ class PlanBase(BaseModel):
     initial_date: date
     quotas: int
     contract: str
+    value: Decimal
 
 
 class PlanCreate(PlanBase):
@@ -37,6 +38,7 @@ class PlanUpdate(BaseModel):
     device_id: Optional[UUID] = None
     initial_date: Optional[date] = None
     quotas: Optional[int] = None
+    value: Optional[Decimal] = None
     contract: Optional[str] = None
 
 

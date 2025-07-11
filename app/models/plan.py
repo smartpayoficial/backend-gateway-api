@@ -21,6 +21,7 @@ class PlanCreate(BaseModel):
     vendor_id: UUID
     device_id: UUID
     initial_date: str = Field(description="Date in ISO 8601 format (YYYY-MM-DD)")
+    value: Decimal
     quotas: int
     contract: str
 
@@ -40,7 +41,7 @@ class PlanCreate(BaseModel):
 class PlanUpdate(BaseModel):
     name: Optional[str] = None
     description: Optional[str] = None
-    price: Optional[float] = None
+    value: Decimal
     active: Optional[bool] = None
 
 
