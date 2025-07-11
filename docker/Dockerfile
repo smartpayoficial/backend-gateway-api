@@ -36,9 +36,6 @@ EXPOSE 8000
 
 RUN mkdir -p /etc/ssl/smartpay
 
-# Copia los certificados desde el contexto de build (tu máquina) al contenedor
-COPY ./certs/fullchain.pem /etc/ssl/smartpay/fullchain.pem
-COPY ./certs/smartpay-oficial.com-PrivateKey.pem /etc/ssl/smartpay/smartpay-oficial.com-PrivateKey.pem
 
 # Comando para iniciar la aplicación
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--ssl-certfile=/etc/ssl/smartpay/fullchain.pem", "--ssl-keyfile=/etc/ssl/smartpay/smartpay-oficial.com-PrivateKey.pem"]
