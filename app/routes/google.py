@@ -63,4 +63,4 @@ async def auth_callback(request: Request):
             state=FactoryResetProtectionState.ACTIVE,
         )
         await factory_reset_protection_service.create_factory_reset_protection(factory)
-    return RedirectResponse(f"http://localhost:5173/configuration")
+    return RedirectResponse(f"https://smartpay-oficial.com/configuration")
