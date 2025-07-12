@@ -39,7 +39,7 @@ async def create_action(action_in: ActionCreate) -> Optional[ActionResponse]:
             raise e
         except Exception as e:
             # Manejar otros errores (e.g., problemas de conexión)
-            print(f"Ocurrió un error inesperado al contactar el servicio DB: {e}")
+            print(f"Ocurrió un error inesperado al contactar el servicio DB: {url}")
             return None
 
 
@@ -65,7 +65,7 @@ async def get_actions(
             print(f"Error al obtener las acciones del servicio DB: {e.response.text}")
             raise e
         except Exception as e:
-            print(f"Ocurrió un error inesperado al contactar el servicio DB: {e}")
+            print(f"Ocurrió un error inesperado al contactar el servicio DB: {url}")
             return []
 
 
