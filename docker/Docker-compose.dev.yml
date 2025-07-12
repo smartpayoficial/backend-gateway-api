@@ -15,7 +15,7 @@ services:
       SOCKETIO_ASYNC_MODE: asgi
       DB_API: http://smartpay-db-api:8002
       USER_SVC_URL: http://smartpay-db-api:8002
-      REDIRECT_URI: http://localhost:8000/api/v1/google/auth/callback
+      REDIRECT_URI: https://smartpay-oficial.com:8000/api/v1/google/auth/callback
       CLIENT_SECRET: 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
       CLIENT_ID: 631597337466-dt7qitq7tg2022rhje5ib5sk0eua6t79.apps.googleusercontent.com
       # Configuración de correo electrónico
