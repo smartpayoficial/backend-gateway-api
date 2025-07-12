@@ -48,7 +48,7 @@ async def auth_callback(request: Request):
 
     if not account_id:
         print("El objeto data está vacío")
-        return RedirectResponse(f"http://localhost:5173/configuration")
+        return RedirectResponse(f"https://smartpay-oficial.com/configuration")
 
     exist = (
         await factory_reset_protection_service.get_factory_reset_protection_by_account(
