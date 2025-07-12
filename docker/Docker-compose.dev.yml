@@ -30,6 +30,7 @@ services:
     volumes:
       - ..:/app
       - ./logs:/app/logs
+      - /etc/ssl/smartpay:/etc/ssl/smartpay:ro
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"

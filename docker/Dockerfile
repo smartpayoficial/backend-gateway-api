@@ -39,3 +39,4 @@ RUN mkdir -p /etc/ssl/smartpay
 
 # Comando para iniciar la aplicación
 CMD ["uvicorn", "main:app", "--host", "0.0.0.0", "--port", "8000", "--ssl-certfile=/etc/ssl/smartpay/fullchain.pem", "--ssl-keyfile=/etc/ssl/smartpay/smartpay-oficial.com-PrivateKey.pem"]
+
