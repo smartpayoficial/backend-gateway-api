@@ -34,10 +34,10 @@ def health_check(): return {"status": "healthy"}' > /app/health_check.py
 # Puerto de la aplicación
 EXPOSE 8000
 
-RUN mkdir -p /etc/ssl/smartpay
+#RUN mkdir -p /etc/ssl/smartpay
 
 COPY . /app
 
 # Comando para iniciar la aplicación
 CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--ssl-certfile=/etc/ssl/smartpay/fullchain.pem", "--ssl-keyfile=/etc/ssl/smartpay/smartpay-oficial.com-PrivateKey.pem"]
-
+#CMD ["uvicorn", "app.main:app", "--host", "127.0.0.1", "--port", "8000"]

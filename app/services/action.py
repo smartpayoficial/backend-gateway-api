@@ -44,7 +44,7 @@ async def create_action(action_in: ActionCreate) -> Optional[ActionResponse]:
 
 
 async def get_actions(
-    device_id: Optional[UUID] = None, state: Optional[str] = None
+    device_id: Optional[UUID] = None, state: Optional[ActionState] = None
 ) -> List[ActionResponse]:
     """
     Obtiene una lista de acciones desde el servicio de base de datos, con filtros opcionales.
@@ -54,7 +54,7 @@ async def get_actions(
     if device_id:
         params["device_id"] = str(device_id)
     if state:
-        params["state"] = state
+        params["state"] = params["state"] = state.value
 
     async with httpx.AsyncClient() as client:
         try:
