@@ -1,4 +1,4 @@
-from typing import List, Optional
+from typing import Dict, List, Optional
 from uuid import UUID
 
 import httpx
@@ -33,6 +33,18 @@ async def create_device(device_in: DeviceCreate):
 async def get_all_devices(enrollment_id: Optional[str] = Query(None)):
     try:
         return await device_service.get_devices(enrollment_id=enrollment_id)
+    except httpx.HTTPStatusError as e:
+        raise HTTPException(
+            status_code=e.response.status_code,
+            detail=f"Error from downstream service: {e.response.text}",
+        )
+
+
+@router.get("/count", response_model=Dict[str, int])
+async def get_device_count():
+    try:
+        count = await device_service.get_device_count()
+        return {"count": count}
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=e.response.status_code,
