@@ -1,3 +1,4 @@
+from datetime import datetime
 from enum import Enum
 from typing import Optional
 from uuid import UUID
@@ -51,6 +52,8 @@ class Device(BaseModel):
     product_name: str
     state: Optional[str] = None
     enrolment: Optional[Enrolment] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(
         from_attributes=True,
@@ -72,5 +75,7 @@ class DeviceDB(DeviceBase):
 
     device_id: UUID
     enrolment_id: UUID
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
 
     model_config = ConfigDict(from_attributes=True)

@@ -188,11 +188,16 @@ async def confirm_password_reset(data: PasswordResetIn):
         user = resp.json()
         user_id = user.get("user_id")
 
-        # Actualizar contraseña en el servicio de usuarios
+        # Actualizar contraseña en el servicio de usuarios y cambiar estado a Active
         async with httpx.AsyncClient() as client:
             update_url = f"{USER_SVC_URL}{USER_API_PREFIX}/users/{user_id}"
             update_resp = await client.patch(
-                update_url, json={"password": data.new_password}, headers=INTERNAL_HDR
+                update_url,
+                json={
+                    "password": data.new_password,
+                    "state": "Active",  # Cambiar estado a Active cuando se actualiza la contraseña
+                },
+                headers=INTERNAL_HDR,
             )
 
             if update_resp.status_code != 200:
