@@ -10,6 +10,7 @@ from app.api.endpoints import (
     plan,
     region,
     role,
+    store,
     user,
 )
 from app.routers import socket_router
@@ -48,4 +49,5 @@ api_router.include_router(plan.router, prefix="/plans", tags=["plans"])
 api_router.include_router(region.router, prefix="/regions", tags=["regions"])
 api_router.include_router(role.router, prefix="/roles", tags=["roles"])
 api_router.include_router(sim.router, prefix="/sims", tags=["sims"])
+api_router.include_router(store.router, prefix="/stores", tags=["stores"])
 api_router.include_router(user.router, prefix="/users", tags=["users"])
