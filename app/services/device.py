@@ -19,10 +19,14 @@ async def create_device(device_in: DeviceCreate) -> Optional[Device]:
         return None
 
 
-async def get_devices(enrollment_id: Optional[str] = None) -> List[Device]:
+async def get_devices(
+    enrollment_id: Optional[str] = None, user_id: Optional[UUID] = None
+) -> List[Device]:
     params = {}
     if enrollment_id:
         params["enrolment_id"] = enrollment_id
+    if user_id:
+        params["user_id"] = str(user_id)
 
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{USER_SVC_URL}/api/v1/devices/", params=params)

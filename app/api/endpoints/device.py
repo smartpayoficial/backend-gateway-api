@@ -30,9 +30,13 @@ async def create_device(device_in: DeviceCreate):
 
 
 @router.get("/", response_model=List[Device])
-async def get_all_devices(enrollment_id: Optional[str] = Query(None)):
+async def get_all_devices(
+    enrollment_id: Optional[str] = Query(None), user_id: Optional[UUID] = Query(None)
+):
     try:
-        return await device_service.get_devices(enrollment_id=enrollment_id)
+        return await device_service.get_devices(
+            enrollment_id=enrollment_id, user_id=user_id
+        )
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=e.response.status_code,
