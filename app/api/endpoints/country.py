@@ -22,9 +22,9 @@ async def create_country(country_in: CountryCreate):
 
 
 @router.get("/", response_model=List[CountryDB])
-async def get_all_countries():
+async def get_all_countries(name: str = None):
     try:
-        return await location_service.get_countries()
+        return await location_service.get_countries(name=name)
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=e.response.status_code,
