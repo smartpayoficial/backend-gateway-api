@@ -4,7 +4,6 @@ from uuid import UUID
 import httpx
 from fastapi import APIRouter, HTTPException, Response, status
 
-
 from app.models.store import StoreCreate, StoreDB, StoreUpdate
 from app.services import store as store_service
 from app.utils.logger import get_logger
