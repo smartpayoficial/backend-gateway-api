@@ -20,6 +20,7 @@ class UserBase(BaseModel):
     prefix: Optional[str] = None
     phone: Optional[str] = None
     address: Optional[str] = None
+    # A = Active, I = Initial
     state: Optional[str] = "A"
 
 
@@ -65,6 +66,7 @@ class User(UserBase):
     updated_at: Optional[datetime] = None
     role: Optional[Role] = None
     city: Optional[CityDB] = None
+
 
 class UserPaymentResponse(BaseModel):
     first_name: Optional[str] = None

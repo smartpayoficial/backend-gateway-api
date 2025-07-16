@@ -46,8 +46,10 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> User:
     user_state = user_data.get("state")
     if user_state in ("UserState.ACTIVE", "Active"):
         user_data["state"] = "A"
+    elif user_state == "Initial":
+        user_data["state"] = "I"
 
-    if user_data.get("state") != "A":
+    if user_data.get("state") not in ["A", "I"]:
         raise HTTPException(status_code=400, detail="Usuario inactivo o bloqueado")
 
     return User(**user_data)
