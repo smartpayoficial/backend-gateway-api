@@ -78,7 +78,7 @@ async def get_countries(name: Optional[str] = None) -> List[CountryDB]:
     params = {}
     if name:
         params["name"] = name
-        
+
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{USER_SVC_URL}/api/v1/countries/", params=params)
         response.raise_for_status()
