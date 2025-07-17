@@ -4,6 +4,8 @@ from uuid import UUID
 
 from pydantic import BaseModel
 
+from app.models.country import CountryDB
+
 
 class StoreBase(BaseModel):
     nombre: str
@@ -31,6 +33,7 @@ class StoreDB(StoreBase):
     id: UUID
     created_at: datetime
     updated_at: datetime
+    country: Optional[CountryDB] = None
 
     class Config:
         orm_mode = True

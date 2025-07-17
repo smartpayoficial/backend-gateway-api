@@ -126,8 +126,15 @@ async def update_store(store_id: UUID, store_in: StoreUpdate) -> Optional[StoreD
                 f"{STORE_API_URL}/{store_id}",
                 json=store_in.model_dump(mode="json", exclude_unset=True),
             )
+            # Aceptar tanto 200 (con contenido) como 204 (sin contenido) como respuestas exitosas
             if response.status_code == 200:
                 return StoreDB(**response.json())
+            elif response.status_code == 204:
+                # Para 204 No Content, obtenemos la tienda actualizada con una llamada adicional
+                logger.info(
+                    f"Recibido 204 No Content al actualizar tienda {store_id}, obteniendo datos actualizados"
+                )
+                return await get_store(store_id)
             return None
     except httpx.HTTPStatusError as e:
         logger.error(
@@ -184,8 +191,15 @@ async def update_store_tokens(store_id: UUID, tokens: int) -> Optional[StoreDB]:
                 f"{STORE_API_URL}/{store_id}/tokens",
                 json={"tokens_disponibles": tokens},
             )
+            # Aceptar tanto 200 (con contenido) como 204 (sin contenido) como respuestas exitosas
             if response.status_code == 200:
                 return StoreDB(**response.json())
+            elif response.status_code == 204:
+                # Para 204 No Content, obtenemos la tienda actualizada con una llamada adicional
+                logger.info(
+                    f"Recibido 204 No Content al actualizar tokens de tienda {store_id}, obteniendo datos actualizados"
+                )
+                return await get_store(store_id)
             return None
     except httpx.HTTPStatusError as e:
         logger.error(
