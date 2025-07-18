@@ -31,9 +31,13 @@ async def create_city(city_in: CityCreate) -> Optional[CityDB]:
         return None
 
 
-async def get_cities() -> List[CityDB]:
+async def get_cities(name: Optional[str] = None) -> List[CityDB]:
+    params = {}
+    if name:
+        params["name"] = name
+        
     async with httpx.AsyncClient() as client:
-        response = await client.get(f"{USER_SVC_URL}/api/v1/cities/")
+        response = await client.get(f"{USER_SVC_URL}/api/v1/cities/", params=params)
         response.raise_for_status()
         return [CityDB(**item) for item in response.json()]
 

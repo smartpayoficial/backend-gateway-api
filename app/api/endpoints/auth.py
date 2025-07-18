@@ -69,13 +69,18 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
         raise HTTPException(status_code=401, detail="Credenciales inválidas")
 
     user = resp.json()
-    is_active = user.get("is_active")
-    if is_active is None:
-        is_active = str(user.get("state", "")).lower() == "active"
+    
+    # Check if user state is Inactive (explicitly reject only inactive users)
+    user_state = str(user.get("state", "")).lower()
+    is_inactive = user_state == "inactive"
+    
+    # For Initial state users or any other state except Inactive, allow login
+    # Only verify password for non-Initial state users
+    password_valid = True
+    if user_state != "initial":
+        password_valid = verify_password(form_data.password, user["password_hash"])
 
-    password_valid = verify_password(form_data.password, user["password_hash"])
-
-    if not is_active or not password_valid:
+    if is_inactive or not password_valid:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED, detail="Credenciales inválidas"
         )

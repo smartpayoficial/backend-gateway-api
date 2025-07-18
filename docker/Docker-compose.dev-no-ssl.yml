@@ -1,0 +1,48 @@
+services:
+  api:
+    build:
+      context: ..
+      dockerfile: docker/Dockerfile
+    container_name: backend-api
+    ports:
+      - "8000:8000"
+      - "8001:8001"  # Puerto para WebSocket
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8000
+      PYTHONUNBUFFERED: 1
+      PYTHONPATH: /app
+      SOCKETIO_ASYNC_MODE: asgi
+      DB_API: http://smartpay-db-api:8002
+      USER_SVC_URL: http://smartpay-db-api:8002
+      REDIRECT_URI: http://smartpay-oficial.com:8000/api/v1/google/auth/callback
+      CLIENT_SECRET: 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
+      CLIENT_ID: 631597337466-dt7qitq7tg2022rhje5ib5sk0eua6t79.apps.googleusercontent.com
+      # Configuración de correo electrónico
+      SMTP_SERVER: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USERNAME: smartpay.noreply@gmail.com
+      # Contraseña de aplicación de Google - con espacios como la mostró Google
+      SMTP_PASSWORD: 'jgiz oqck snoj icwz'
+      EMAIL_FROM: smartpay.noreply@gmail.com
+      RESET_PASSWORD_BASE_URL: http://smartpay-oficial.com/reset-password
+
+    volumes:
+      - ..:/app
+      - ./logs:/app/logs
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    sysctls:
+      - net.core.somaxconn=65535
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    networks:
+      - smartpay
+
+networks:
+  smartpay:
+    external: true

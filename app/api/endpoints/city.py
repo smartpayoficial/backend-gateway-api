@@ -1,6 +1,7 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
+import httpx
 from fastapi import APIRouter, HTTPException, Path, Response, status
 
 from app.models.location import CityCreate, CityDB, CityUpdate
@@ -21,9 +22,9 @@ async def create_city(city_in: CityCreate):
 
 
 @router.get("/", response_model=List[CityDB])
-async def get_all_cities():
+async def get_all_cities(name: Optional[str] = None):
     try:
-        return await location_service.get_cities()
+        return await location_service.get_cities(name=name)
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=e.response.status_code,
