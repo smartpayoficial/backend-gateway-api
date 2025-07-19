@@ -3,6 +3,8 @@ from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from .region import RegionDB
+
 
 class CityBase(BaseModel):
     name: str
@@ -19,4 +21,5 @@ class CityUpdate(CityBase):
 
 class CityDB(CityBase):
     city_id: UUID
+    region: Optional[RegionDB] = None
     model_config = ConfigDict(from_attributes=True)

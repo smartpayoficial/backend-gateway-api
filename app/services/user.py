@@ -13,10 +13,13 @@ logger = get_logger(__name__)
 USER_SVC_URL = os.getenv("USER_SVC_URL", "http://localhost:8002")
 USER_API_URL = f"{USER_SVC_URL}/api/v1/users"
 
+# Configuración de timeout para las solicitudes HTTP
+TIMEOUT_SECONDS = 30.0
+
 
 async def create_user(user_in: UserCreate) -> User:
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
             response = await client.post(
                 f"{USER_API_URL}/", json=user_in.model_dump(mode="json")
             )
@@ -33,7 +36,7 @@ async def create_user(user_in: UserCreate) -> User:
 
 async def get_user(user_id: UUID) -> Optional[User]:
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
             response = await client.get(f"{USER_API_URL}/{user_id}")
             if response.status_code == 200:
                 return User(**response.json())
@@ -60,7 +63,7 @@ async def get_users(
         params["state"] = state
 
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
             response = await client.get(f"{USER_API_URL}/", params=params)
             response.raise_for_status()
             return [User(**item) for item in response.json()]
@@ -75,7 +78,7 @@ async def get_users(
 
 async def update_user(user_id: UUID, user_in: UserUpdate) -> Optional[User]:
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
             response = await client.patch(
                 f"{USER_API_URL}/{user_id}",
                 json=user_in.model_dump(mode="json", exclude_unset=True),
@@ -97,7 +100,7 @@ async def update_user(user_id: UUID, user_in: UserUpdate) -> Optional[User]:
 
 async def delete_user(user_id: UUID) -> bool:
     try:
-        async with httpx.AsyncClient() as client:
+        async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
             response = await client.delete(f"{USER_API_URL}/{user_id}")
             return response.status_code == 204
     except httpx.HTTPStatusError as e:
