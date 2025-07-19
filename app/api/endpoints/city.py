@@ -22,9 +22,9 @@ async def create_city(city_in: CityCreate):
 
 
 @router.get("/", response_model=List[CityDB])
-async def get_all_cities(name: Optional[str] = None):
+async def get_all_cities(name: Optional[str] = None, region_id: Optional[UUID] = None):
     try:
-        return await location_service.get_cities(name=name)
+        return await location_service.get_cities(name=name, region_id=region_id)
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=e.response.status_code,

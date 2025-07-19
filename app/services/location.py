@@ -31,10 +31,12 @@ async def create_city(city_in: CityCreate) -> Optional[CityDB]:
         return None
 
 
-async def get_cities(name: Optional[str] = None) -> List[CityDB]:
+async def get_cities(name: Optional[str] = None, region_id: Optional[UUID] = None) -> List[CityDB]:
     params = {}
     if name:
         params["name"] = name
+    if region_id:
+        params["region_id"] = str(region_id)
         
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{USER_SVC_URL}/api/v1/cities/", params=params)
@@ -123,9 +125,13 @@ async def create_region(region_in: RegionCreate) -> Optional[RegionDB]:
         return None
 
 
-async def get_regions() -> List[RegionDB]:
+async def get_regions(country_id: Optional[UUID] = None) -> List[RegionDB]:
+    params = {}
+    if country_id:
+        params["country_id"] = str(country_id)
+        
     async with httpx.AsyncClient() as client:
-        response = await client.get(f"{USER_SVC_URL}/api/v1/regions/")
+        response = await client.get(f"{USER_SVC_URL}/api/v1/regions/", params=params)
         response.raise_for_status()
         return [RegionDB(**item) for item in response.json()]
 

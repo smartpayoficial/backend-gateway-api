@@ -1,4 +1,4 @@
-from typing import List
+from typing import List, Optional
 from uuid import UUID
 
 import httpx
@@ -22,9 +22,9 @@ async def create_region(region_in: RegionCreate):
 
 
 @router.get("/", response_model=List[RegionDB])
-async def get_all_regions():
+async def get_all_regions(country_id: Optional[UUID] = None):
     try:
-        return await location_service.get_regions()
+        return await location_service.get_regions(country_id=country_id)
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=e.response.status_code,
