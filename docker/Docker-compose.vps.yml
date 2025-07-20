@@ -49,9 +49,9 @@ services:
       - smartpay
       
   # Servicio de base de datos
-  smartpay-db:
-    image: postgres:15
-    container_name: docker-smartpay-db-1
+  smartpay-db-v12:
+    image: postgres:12
+    container_name: docker-smartpay-db-v12-1
     ports:
       - "5437:5432"
     environment:
