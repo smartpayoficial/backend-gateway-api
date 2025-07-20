@@ -121,7 +121,7 @@ class DeploymentService:
       SOCKETIO_ASYNC_MODE: asgi
       DB_API: http://smartpay-db-api-{store_id}:{ports['db_port']}
       USER_SVC_URL: http://smartpay-db-api-{store_id}:{ports['db_port']}
-      REDIRECT_URI: http://smartpay-oficial.com:{ports['backend_port']}/api/v1/google/auth/callback
+      REDIRECT_URI: https://smartpay-oficial.com:{ports['backend_port']}/api/v1/google/auth/callback
       CLIENT_SECRET: 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
       CLIENT_ID: 631597337466-dt7qitq7tg2022rhje5ib5sk0eua6t79.apps.googleusercontent.com
       SMTP_SERVER: smtp.gmail.com
@@ -129,7 +129,7 @@ class DeploymentService:
       SMTP_USERNAME: smartpay.noreply@gmail.com
       SMTP_PASSWORD: 'jgiz oqck snoj icwz'
       EMAIL_FROM: smartpay.noreply@gmail.com
-      RESET_PASSWORD_BASE_URL: http://smartpay-oficial.com/reset-password
+      RESET_PASSWORD_BASE_URL: https://smartpay-oficial.com/reset-password
     # No need to mount volumes as we're using the existing image
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-use-colors"]
     restart: unless-stopped
@@ -248,8 +248,8 @@ networks:
                 raise Exception("Error iniciando servicios")
             
             # Generar links con dominio smartpay-oficial.com en lugar de localhost
-            back_link = f"http://smartpay-oficial.com:{ports['backend_port']}"
-            db_link = f"http://smartpay-oficial.com:{ports['db_port']}" if db_copied else None
+            back_link = f"https://smartpay-oficial.com:{ports['backend_port']}"
+            db_link = f"https://smartpay-oficial.com:{ports['db_port']}" if db_copied else None
             
             deployment_info = {
                 "store_id": str(store_id),
