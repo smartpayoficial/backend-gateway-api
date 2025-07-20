@@ -59,7 +59,7 @@ services:
       POSTGRES_PASSWORD: postgres
       POSTGRES_DB: smartpay
     volumes:
-      - postgres_data:/var/lib/postgresql/data
+      - smartpay-db-prod:/var/lib/postgresql/data
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U postgres"]
       interval: 10s
@@ -102,4 +102,6 @@ networks:
     name: smartpay_network
 
 volumes:
-  postgres_data:
+  smartpay-db-prod:
+    driver: local
+    name: smartpay-db-prod
