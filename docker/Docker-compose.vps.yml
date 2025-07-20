@@ -26,7 +26,6 @@ services:
       SMTP_PASSWORD: 'jgiz oqck snoj icwz'
       EMAIL_FROM: smartpay.noreply@gmail.com
       RESET_PASSWORD_BASE_URL: https://smartpay-oficial.com/reset-password
-
     volumes:
       - ..:/app
       - ./logs:/app/logs
@@ -38,10 +37,8 @@ services:
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
-    
     # Comando con SSL habilitado
     command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--ssl-certfile=/etc/ssl/smartpay/fullchain.pem", "--ssl-keyfile=/etc/ssl/smartpay/smartpay-oficial.com-PrivateKey.pem"]
-
     sysctls:
       - net.core.somaxconn=65535
     ulimits:
@@ -50,7 +47,54 @@ services:
         hard: 65535
     networks:
       - smartpay
+      
+  # Servicio de base de datos
+  smartpay-db:
+    image: postgres:15
+    container_name: docker-smartpay-db-1
+    ports:
+      - "5437:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: smartpay
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - smartpay
+      
+  # Servicio de API de base de datos
+  smartpay-db-api:
+    image: smartpay-db-api
+    container_name: docker-smartpay-db-api-1
+    ports:
+      - "8002:8002"
+      - "10001:10001"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8002
+      PYTHONUNBUFFERED: 1
+      DB_HOST: smartpay-db
+      DB_PORT: 5432
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+      DB_NAME: smartpay
+    depends_on:
+      smartpay-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - smartpay
 
 networks:
   smartpay:
     driver: bridge
+
+volumes:
+  postgres_data:
