@@ -107,9 +107,8 @@ class DeploymentService:
         try:
             docker_compose_content = f"""services:
   api-{store_id}:
-    build:
-      context: .
-      dockerfile: docker/Dockerfile
+    image: docker-api
+    # No build context needed as we're using the existing image
     container_name: backend-api-{store_id}
     ports:
       - "{ports['backend_port']}:8000"
@@ -131,9 +130,8 @@ class DeploymentService:
       SMTP_PASSWORD: 'jgiz oqck snoj icwz'
       EMAIL_FROM: smartpay.noreply@gmail.com
       RESET_PASSWORD_BASE_URL: https://smartpay-oficial.com/reset-password
-    volumes:
-      - .:/app
-      - ./logs:/app/logs
+    # No need to mount volumes as we're using the existing image
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
