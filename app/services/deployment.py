@@ -19,9 +19,9 @@ if os.path.exists('/host/smart-pay'):
     DEPLOYMENT_BASE_PATH = "/host/smart-pay/deployments"
 else:
     # Estamos en el host
-    BASE_BACKEND_PATH = "/home/danielamg/Escritorio/trabajo/olimpo/smart-pay/backend-gateway-api"
-    BASE_DB_PATH = "/home/danielamg/Escritorio/trabajo/olimpo/smart-pay/db-smartpay"
-    DEPLOYMENT_BASE_PATH = "/home/danielamg/Escritorio/trabajo/olimpo/smart-pay/deployments"
+    BASE_BACKEND_PATH = "/home/smartpayvps/backend-gateway-api"
+    BASE_DB_PATH = "/home/smartpayvps/db-smartpay"
+    DEPLOYMENT_BASE_PATH = "/home/smartpayvps/deployments"
 
 
 class DeploymentService:
