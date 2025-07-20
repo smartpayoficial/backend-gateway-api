@@ -92,7 +92,7 @@ services:
       - /home/danielamg/Escritorio/trabajo/olimpo/smart-pay/db-smartpay:/usr/src/app
       - ./logs:/usr/src/app/logs
     working_dir: /usr/src/app
-    command: ["sh", "-c", "cd /usr/src/app && ls -la && python -c 'import sys; print(sys.path)' && uvicorn app.main:app --host 0.0.0.0 --port 8002 --no-use-colors"]
+    command: ["sh", "-c", "cd /usr/src/app && python -m uvicorn app.main:app --host 0.0.0.0 --port 8002 --no-use-colors"]
     depends_on:
       smartpay-db:
         condition: service_healthy
