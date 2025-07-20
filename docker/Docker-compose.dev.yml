@@ -30,7 +30,11 @@ services:
     volumes:
       - ..:/app
       - ./logs:/app/logs
-      - /etc/ssl/smartpay:/etc/ssl/smartpay:ro
+      # - /etc/ssl/smartpay:/etc/ssl/smartpay:ro  # Comentado temporalmente
+      # Montar Docker socket para Docker-in-Docker
+      - /var/run/docker.sock:/var/run/docker.sock
+      # Montar directorio padre para acceso a deployments
+      - /home/danielamg/Escritorio/trabajo/olimpo/smart-pay:/host/smart-pay
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
