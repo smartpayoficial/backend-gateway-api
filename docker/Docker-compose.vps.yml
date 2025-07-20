@@ -13,8 +13,8 @@ services:
       PYTHONUNBUFFERED: 1
       PYTHONPATH: /app
       SOCKETIO_ASYNC_MODE: asgi
-      DB_API: http://smartpay-db-api:8002
-      USER_SVC_URL: http://smartpay-db-api:8002
+      DB_API: http://127.0.0.1:8002
+      USER_SVC_URL: http://127.0.0.1:8002
       REDIRECT_URI: https://smartpay-oficial.com:8000/api/v1/google/auth/callback
       CLIENT_SECRET: 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
       CLIENT_ID: 631597337466-dt7qitq7tg2022rhje5ib5sk0eua6t79.apps.googleusercontent.com
@@ -72,7 +72,7 @@ services:
   # Servicio de API de base de datos
   smartpay-db-api:
     image: smartpay-db-api
-    container_name: docker-smartpay-db-api-1
+    container_name: smartpay-db-api
     ports:
       - "8002:8002"
       - "10001:10001"
@@ -100,6 +100,7 @@ services:
 networks:
   smartpay:
     driver: bridge
+    name: smartpay_network
 
 volumes:
   postgres_data:
