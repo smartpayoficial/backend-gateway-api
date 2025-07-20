@@ -82,7 +82,7 @@ services:
       - WEP_APP_TITLE=smartpay-db
       - WEP_APP_DESCRIPTION=Database service for SmartPay
       - ENVIRONMENT=prod
-      - POSTGRES_DATABASE_URL=postgres://postgres:postgres@smartpay-db:5432/smartpay
+      - POSTGRES_DATABASE_URL=postgres://postgres:postgres@smartpay-db-v12:5432/smartpay
       - DEFAULT_DATA=False
       - PYTHONPATH=/usr/src/app
     volumes:
@@ -90,7 +90,7 @@ services:
     working_dir: /usr/src/app
     command: ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002"]
     depends_on:
-      smartpay-db:
+      smartpay-db-v12:
         condition: service_healthy
     restart: unless-stopped
     networks:
