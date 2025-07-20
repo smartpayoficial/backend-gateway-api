@@ -77,14 +77,17 @@ services:
       - "8002:8002"
       - "10001:10001"
     environment:
-      HOST: 0.0.0.0
-      PORT: 8002
-      PYTHONUNBUFFERED: 1
-      DB_HOST: smartpay-db
-      DB_PORT: 5432
-      DB_USER: postgres
-      DB_PASSWORD: postgres
-      DB_NAME: smartpay
+      - PYTHONUNBUFFERED=1
+      - WEB_APP_VERSION=0.1.0
+      - WEP_APP_TITLE=smartpay-db
+      - WEP_APP_DESCRIPTION=Database service for SmartPay
+      - ENVIRONMENT=prod
+      - POSTGRES_DATABASE_URL=postgres://postgres:postgres@smartpay-db:5432/smartpay
+      - DEFAULT_DATA=False
+    volumes:
+      - ../db-smartpay:/usr/src/app
+      - ./logs:/usr/src/app/logs
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002", "--no-use-colors"]
     depends_on:
       smartpay-db:
         condition: service_healthy
