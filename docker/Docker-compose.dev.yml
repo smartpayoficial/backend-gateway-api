@@ -38,7 +38,8 @@ services:
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
-
+    # Comando sin SSL para desarrollo
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
     sysctls:
       - net.core.somaxconn=65535
     ulimits:
