@@ -33,7 +33,7 @@ services:
       # Montar Docker socket para Docker-in-Docker
       - /var/run/docker.sock:/var/run/docker.sock
       # Montar directorio padre para acceso a deployments
-      - /home/smartpayvps/smart-pay:/host/smart-pay
+      - /home/smartpayvps:/host/smartpayvps
     restart: unless-stopped
     extra_hosts:
       - "host.docker.internal:host-gateway"
