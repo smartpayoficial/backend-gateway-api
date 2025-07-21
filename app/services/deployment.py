@@ -12,13 +12,13 @@ logger = get_logger(__name__)
 
 # Rutas base para el deployment
 # Detectar si estamos en contenedor (con volumen montado) o en host
-if os.path.exists('/host/smart-pay'):
-    # Estamos en el contenedor con volumen montado
+if os.path.exists('/host/smart-pay/backend-gateway-api') and os.path.exists('/host/smart-pay/db-smartpay'):
+    # Estamos en el contenedor con volumen montado y los archivos existen
     BASE_BACKEND_PATH = "/host/smart-pay/backend-gateway-api"
     BASE_DB_PATH = "/host/smart-pay/db-smartpay"
     DEPLOYMENT_BASE_PATH = "/host/smart-pay/deployments"
 else:
-    # Estamos en el host
+    # Estamos en el host o los archivos no están en /host/smart-pay
     BASE_BACKEND_PATH = "/home/smartpayvps/backend-gateway-api"
     BASE_DB_PATH = "/home/smartpayvps/db-smartpay"
     DEPLOYMENT_BASE_PATH = "/home/smartpayvps/deployments"
@@ -266,7 +266,7 @@ networks:
         except Exception as e:
             logger.error(f"Error en deployment para store {store_id}: {str(e)}")
             # Cleanup en caso de error
-            self.cleanup_deployment(store_id)
+            await self.cleanup_deployment(store_id)
             return None
 
 
