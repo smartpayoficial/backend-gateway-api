@@ -39,13 +39,13 @@ RUN pip install --no-cache-dir -r test-requirements.txt
 RUN echo 'from fastapi import FastAPI; app = FastAPI(); @app.get("/health") \
 def health_check(): return {"status": "healthy"}' > /app/health_check.py
 
-# Puerto de la aplicación
-EXPOSE 8000
+# Puerto de la aplicación (HTTPS)
+EXPOSE 443
+EXPOSE 8001
 
 #RUN mkdir -p /etc/ssl/smartpay
 
 COPY . /app
 
-# Comando para iniciar la aplicación
-# CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--ssl-certfile=/etc/ssl/smartpay/fullchain.pem", "--ssl-keyfile=/etc/ssl/smartpay/smartpay-oficial.com-PrivateKey.pem"]
-CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+# Comando para iniciar la aplicación con SSL
+CMD ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "443", "--ssl-certfile=/etc/ssl/smartpay/fullchain.pem", "--ssl-keyfile=/etc/ssl/smartpay/smartpay-oficial.com-PrivateKey.pem"]
