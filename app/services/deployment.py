@@ -167,21 +167,37 @@ networks:
             original_cwd = os.getcwd()
             os.chdir(backend_path)
             
-            # Ejecutar docker compose up -d
-            result = subprocess.run(
-                ["docker", "compose", "up", "-d"],
-                capture_output=True,
-                text=True,
-                timeout=300  # 5 minutos timeout
-            )
+            # Intentar con docker-compose primero, luego con docker compose
+            commands_to_try = [
+                ["docker-compose", "up", "-d"],
+                ["docker", "compose", "up", "-d"]
+            ]
+            
+            result = None
+            for cmd in commands_to_try:
+                try:
+                    result = subprocess.run(
+                        cmd,
+                        capture_output=True,
+                        text=True,
+                        timeout=300  # 5 minutos timeout
+                    )
+                    if result.returncode == 0:
+                        break
+                    else:
+                        logger.warning(f"Comando {' '.join(cmd)} falló: {result.stderr}")
+                except FileNotFoundError:
+                    logger.warning(f"Comando {cmd[0]} no encontrado")
+                    continue
             
             os.chdir(original_cwd)
             
-            if result.returncode == 0:
+            if result and result.returncode == 0:
                 logger.info(f"Servicios iniciados exitosamente para store {store_id}")
                 return True
             else:
-                logger.error(f"Error iniciando servicios para store {store_id}: {result.stderr}")
+                error_msg = result.stderr if result else "Ningún comando docker disponible"
+                logger.error(f"Error iniciando servicios para store {store_id}: {error_msg}")
                 return False
                 
         except subprocess.TimeoutExpired:
