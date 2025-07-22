@@ -142,14 +142,15 @@ async def request_password_reset(request: Request, data: PasswordResetRequestIn)
 
     user = resp.json()
     email = user.get("email")
+    user_id = user.get("user_id")
 
-    if not email:
+    if not email or not user_id:
         return {
             "message": "Si el DNI está registrado, recibirás un correo con instrucciones."
         }
 
-    # Generar token para restablecer contraseña
-    token = generate_password_reset_token(email)
+    # Generar token para restablecer contraseña (ahora incluye user_id)
+    token = generate_password_reset_token(email, user_id)
 
     # Construir URL de restablecimiento
     base_url = os.getenv("RESET_PASSWORD_BASE_URL", str(request.base_url))
@@ -160,6 +161,7 @@ async def request_password_reset(request: Request, data: PasswordResetRequestIn)
     print("ENLACE DE RESTABLECIMIENTO DE CONTRASEÑA GENERADO EN EL ENDPOINT:")
     print(f"URL: {reset_url}")
     print(f"Para: {email}")
+    print(f"User ID: {user_id}")
     print("=" * 80 + "\n")
 
     # Enviar correo electrónico
@@ -177,47 +179,35 @@ async def confirm_password_reset(data: PasswordResetIn):
     Verifica el token y actualiza la contraseña del usuario si el token es válido.
     """
     try:
-        # Verificar token y obtener email
-        email = verify_password_reset_token(data.token)
-
-        # Buscar usuario por email
-        async with httpx.AsyncClient() as client:
-            url = f"{USER_SVC_URL}{USER_API_PREFIX}/users/by-email/{email}"
-            resp = await client.get(url, headers=INTERNAL_HDR)
-
-        if resp.status_code != 200:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND, detail="Usuario no encontrado"
-            )
-
-        user = resp.json()
-        user_id = user.get("user_id")
+        # Verificar token y obtener datos
+        token_data = verify_password_reset_token(data.token)
+        email = token_data["email"]
+        user_id = token_data["user_id"]
 
         # Actualizar contraseña en el servicio de usuarios y cambiar estado a Active
         async with httpx.AsyncClient() as client:
             update_url = f"{USER_SVC_URL}{USER_API_PREFIX}/users/{user_id}"
             update_resp = await client.patch(
                 update_url,
+                headers=INTERNAL_HDR,
                 json={
                     "password": data.new_password,
-                    "state": "Active",  # Cambiar estado a Active cuando se actualiza la contraseña
+                    "state": "Active"
                 },
-                headers=INTERNAL_HDR,
             )
 
-            if update_resp.status_code != 200:
-                raise HTTPException(
-                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                    detail="Error al actualizar la contraseña",
-                )
+        if update_resp.status_code != 200:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Error al actualizar la contraseña",
+            )
 
-        return {"message": "Contraseña actualizada correctamente"}
+        return {"message": "Contraseña actualizada exitosamente"}
 
-    except HTTPException as e:
-        # Re-lanzar excepciones HTTP ya formateadas
+    except HTTPException:
         raise
     except Exception as e:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Error al procesar la solicitud: {str(e)}",
         )

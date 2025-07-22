@@ -1,6 +1,7 @@
 import os
 from typing import List, Optional
 from uuid import UUID
+import logging
 
 import httpx
 
@@ -10,6 +11,7 @@ from app.models.payment_response import PaymentResponse
 USER_SVC_URL = os.getenv("USER_SVC_URL", "http://localhost:8002")
 PAYMENT_API_URL = f"{USER_SVC_URL}/api/v1/payments"
 
+logging.basicConfig(level=logging.DEBUG)
 
 async def create_payment(payment_in: PaymentCreate) -> Optional[PaymentResponse]:
     async with httpx.AsyncClient() as client:
@@ -24,7 +26,7 @@ async def create_payment(payment_in: PaymentCreate) -> Optional[PaymentResponse]
 async def get_payments(
     state: Optional[PaymentState] = None,
     plan_id: Optional[UUID] = None,
-    device_id: Optional[UUID] = None,
+    device_id: Optional[UUID] = None
 ) -> List[PaymentResponse]:
     params = {}
     if state:
@@ -37,7 +39,34 @@ async def get_payments(
     async with httpx.AsyncClient() as client:
         response = await client.get(PAYMENT_API_URL, params=params)
         response.raise_for_status()
-        return [PaymentResponse(**item) for item in response.json()]
+        
+        raw_data = response.json()
+        
+        payments = []
+        for item in raw_data:
+            if 'plan' not in item or not item['plan']:
+                item['plan'] = None
+            else:
+                plan_data = item['plan']
+                if 'plan_id' not in plan_data:
+                    item['plan'] = None
+                else:
+                    # Asegurar estructura básica
+                    plan_data.setdefault('user', {})
+                    plan_data.setdefault('vendor', {})
+                    plan_data.setdefault('device', {})
+                    
+                    # Asignar IDs desde los objetos anidados si existen
+                    if 'user' in plan_data and 'user_id' in plan_data['user']:
+                        plan_data['user_id'] = plan_data['user']['user_id']
+                    if 'vendor' in plan_data and 'user_id' in plan_data['vendor']:
+                        plan_data['vendor_id'] = plan_data['vendor']['user_id']
+                    if 'device' in plan_data and 'device_id' in plan_data['device']:
+                        plan_data['device_id'] = plan_data['device']['device_id']
+            
+            payments.append(PaymentResponse(**item))
+        
+        return payments
 
 
 async def get_payment(payment_id: UUID) -> Optional[PaymentResponse]:

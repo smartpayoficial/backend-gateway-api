@@ -2,8 +2,7 @@ from datetime import date, datetime
 from decimal import Decimal
 from typing import Optional
 from uuid import UUID
-
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, Field, ConfigDict
 
 # Simplified models for nested objects in payment responses
 
@@ -44,19 +43,23 @@ class PaymentUserResponse(BaseModel):
 class PaymentPlanResponse(BaseModel):
     """Modelo simplificado de Plan en el contexto de un pago"""
     plan_id: UUID
-    user_id: UUID
-    vendor_id: UUID
-    device_id: UUID
+    user_id: Optional[UUID] = None
+    vendor_id: Optional[UUID] = None
+    device_id: Optional[UUID] = None
     initial_date: Optional[date] = None
+    value: Optional[Decimal] = None
     quotas: Optional[int] = None
+    period: Optional[int] = None
     contract: Optional[str] = None
-    user: Optional[PaymentUserResponse] = None
-    vendor: Optional[PaymentUserResponse] = None
-    device: Optional[PaymentDeviceResponse] = None
+    
+    # Campos anidados como diccionarios para mantener estructura completa
+    user: dict = Field(default_factory=dict)
+    vendor: dict = Field(default_factory=dict)
+    device: dict = Field(default_factory=dict)
 
     model_config = ConfigDict(
         from_attributes=True,
-        extra="ignore"
+        extra="allow"  # Permitir campos adicionales
     )
 
 
@@ -68,9 +71,20 @@ class PaymentResponse(BaseModel):
     state: str
     date: datetime
     reference: str
-    plan: Optional[PaymentPlanResponse] = None
+    plan: Optional[PaymentPlanResponse] = Field(default=None, exclude=False)
 
     model_config = ConfigDict(
         from_attributes=True,
-        extra="ignore"
+        json_encoders={
+            datetime: lambda v: v.isoformat(),
+            Decimal: lambda v: str(v),
+            UUID: lambda v: str(v)
+        },
+        extra="allow"
     )
+
+    def dict(self, **kwargs):
+        # Forzar inclusión de todos los campos al serializar
+        kwargs.setdefault('exclude_none', False)
+        kwargs.setdefault('exclude_unset', False)
+        return super().dict(**kwargs)

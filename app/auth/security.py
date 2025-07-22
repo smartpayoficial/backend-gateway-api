@@ -55,38 +55,40 @@ def decode_access_token(token: str) -> Dict[str, Any]:
         )
 
 
-def generate_password_reset_token(email: str) -> str:
+def generate_password_reset_token(email: str, user_id: str) -> str:
     """Generate a secure token for password reset using itsdangerous.
 
     Args:
         email: The user's email address
+        user_id: The user's unique identifier
 
     Returns:
         A URL-safe string token
     """
-    return pwd_reset_serializer.dumps(email, salt=PWD_RESET_SALT)
+    return pwd_reset_serializer.dumps(
+        {"email": email, "user_id": user_id}, 
+        salt=PWD_RESET_SALT
+    )
 
 
-def verify_password_reset_token(token: str, max_age: int = None) -> str:
-    """Verify a password reset token and return the email if valid.
+def verify_password_reset_token(token: str, max_age: int = None) -> dict:
+    """Verify a password reset token and return the email and user_id if valid.
 
     Args:
         token: The token to verify
         max_age: Maximum age in seconds (default is PWD_RESET_EXPIRES_MINUTES * 60)
 
     Returns:
-        The email address encoded in the token
+        A dictionary with email and user_id
 
     Raises:
         HTTPException: If the token is invalid or expired
     """
     try:
-        # Si no se especifica max_age, usar el valor predeterminado
         if max_age is None:
             max_age = PWD_RESET_EXPIRES_MINUTES * 60
-
-        email = pwd_reset_serializer.loads(token, salt=PWD_RESET_SALT, max_age=max_age)
-        return email
+            
+        return pwd_reset_serializer.loads(token, salt=PWD_RESET_SALT, max_age=max_age)
     except SignatureExpired:
         raise HTTPException(
             status_code=status.HTTP_400_BAD_REQUEST,
