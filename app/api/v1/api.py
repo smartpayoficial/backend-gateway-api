@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.endpoints import (
+    analytics,
     auth,
     city,
     country,
@@ -26,6 +27,7 @@ from app.routes import (
 api_router = APIRouter()
 
 api_router.include_router(action.router, prefix="/actions", tags=["actions"])
+api_router.include_router(analytics.router, prefix="/analytics", tags=["analytics"])
 api_router.include_router(auth.router, prefix="/auth", tags=["auth"])
 api_router.include_router(city.router, prefix="/cities", tags=["cities"])
 api_router.include_router(
