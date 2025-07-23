@@ -16,7 +16,7 @@ DB_API_URL = os.getenv("DB_API", "http://smartpay-db-api:8002")
 STORE_API_URL = f"{DB_API_URL}/api/v1/stores"
 
 
-async def create_store(store_in: StoreCreate) -> StoreDB:
+async def create_store(store_in: StoreCreate) -> dict:
     """
     Crea una nueva tienda en la base de datos.
 
@@ -24,7 +24,7 @@ async def create_store(store_in: StoreCreate) -> StoreDB:
         store_in: Datos de la tienda a crear
 
     Returns:
-        StoreDB: La tienda creada con todos sus datos
+        dict: La tienda creada con todos sus datos en formato diccionario
 
     Raises:
         HTTPException: Si ocurre un error en la comunicación con el servicio de DB
@@ -35,7 +35,9 @@ async def create_store(store_in: StoreCreate) -> StoreDB:
                 f"{STORE_API_URL}/", json=store_in.model_dump(mode="json")
             )
             response.raise_for_status()  # Will raise an exception for 4xx/5xx responses
-            return StoreDB(**response.json())
+            store_data = response.json()
+            store = StoreDB.model_validate(store_data)
+            return store.model_dump(mode="json")
     except httpx.HTTPStatusError as e:
         logger.error(f"Error al crear tienda: {e.response.text}", exc_info=True)
         # Re-lanzamos la excepción para que el endpoint pueda manejarla
@@ -54,7 +56,10 @@ async def get_store(store_id: UUID):
             response = await client.get(f"{STORE_API_URL}/{store_id}?expand=country,admin")
             if response.status_code == 200:
                 store_data = response.json()
-                return store_data
+                # Convertimos a StoreDB para validar y luego a dict para retornar
+                # Esto asegura que la estructura sea exactamente la que necesitamos
+                store = StoreDB.model_validate(store_data)
+                return store.model_dump(mode="json")
             else:
                 return None
     except Exception as e:
@@ -64,7 +69,7 @@ async def get_store(store_id: UUID):
 
 async def get_stores(
     country_id: Optional[UUID] = None, plan: Optional[str] = None
-) -> List[StoreDB]:
+) -> List[dict]:
     """
     Obtiene tiendas con transformación al formato exacto requerido.
     """
@@ -81,49 +86,17 @@ async def get_stores(
             
             stores = []
             for store_data in response.json():
-                # Aplicar misma transformación que en get_store
-                if 'admin' in store_data and store_data['admin']:
-                    store_data['admin_id'] = store_data['admin']['user_id']
-                    store_data['admin'] = {
-                        'city_id': store_data['admin']['city_id'],
-                        'dni': store_data['admin']['dni'],
-                        'first_name': store_data['admin']['first_name'],
-                        'middle_name': store_data['admin'].get('middle_name'),
-                        'last_name': store_data['admin']['last_name'],
-                        'second_last_name': store_data['admin'].get('second_last_name'),
-                        'email': store_data['admin']['email'],
-                        'prefix': store_data['admin']['prefix'],
-                        'phone': store_data['admin']['phone'],
-                        'address': store_data['admin']['address'],
-                        'username': store_data['admin']['username'],
-                        'password': store_data['admin']['password'],
-                        'role_id': store_data['admin']['role_id'],
-                        'state': store_data['admin']['state'],
-                        'user_id': store_data['admin']['user_id'],
-                        'role': {
-                            'role_id': None,
-                            'name': None,
-                            'description': None
-                        },
-                        'created_at': store_data['admin']['created_at'],
-                        'updated_at': store_data['admin']['updated_at']
-                    }
-                
-                if 'country' in store_data and store_data['country']:
-                    store_data['country'] = {
-                        'name': store_data['country']['name'],
-                        'code': store_data['country']['code'],
-                        'country_id': store_data['country']['country_id']
-                    }
-                
-                stores.append(StoreDB(**store_data))
+                # Usar Pydantic para validar y transformar
+                store = StoreDB.model_validate(store_data)
+                # Convertir a diccionario para mantener el formato exacto requerido
+                stores.append(store.model_dump(mode="json"))
             return stores
     except Exception as e:
         logger.error(f"Error al obtener tiendas: {str(e)}")
         raise
 
 
-async def update_store(store_id: UUID, store_in: StoreUpdate) -> Optional[StoreDB]:
+async def update_store(store_id: UUID, store_in: StoreUpdate) -> Optional[dict]:
     """
     Actualiza los datos de una tienda existente.
 
@@ -132,7 +105,7 @@ async def update_store(store_id: UUID, store_in: StoreUpdate) -> Optional[StoreD
         store_in: Datos a actualizar
 
     Returns:
-        StoreDB: La tienda actualizada o None si no existe
+        dict: La tienda actualizada o None si no existe
     """
     try:
         async with httpx.AsyncClient() as client:
@@ -142,7 +115,9 @@ async def update_store(store_id: UUID, store_in: StoreUpdate) -> Optional[StoreD
             )
             # Aceptar tanto 200 (con contenido) como 204 (sin contenido) como respuestas exitosas
             if response.status_code == 200:
-                return StoreDB(**response.json())
+                store_data = response.json()
+                store = StoreDB.model_validate(store_data)
+                return store.model_dump(mode="json")
             elif response.status_code == 204:
                 # Para 204 No Content, obtenemos la tienda actualizada con una llamada adicional
                 logger.info(
@@ -188,7 +163,7 @@ async def delete_store(store_id: UUID) -> bool:
         return False
 
 
-async def update_store_tokens(store_id: UUID, tokens: int) -> Optional[StoreDB]:
+async def update_store_tokens(store_id: UUID, tokens: int) -> Optional[dict]:
     """
     Actualiza la cantidad de tokens disponibles de una tienda.
 
@@ -197,7 +172,7 @@ async def update_store_tokens(store_id: UUID, tokens: int) -> Optional[StoreDB]:
         tokens: Nueva cantidad de tokens
 
     Returns:
-        StoreDB: La tienda actualizada o None si no existe
+        dict: La tienda actualizada o None si no existe
     """
     try:
         async with httpx.AsyncClient() as client:
@@ -207,7 +182,9 @@ async def update_store_tokens(store_id: UUID, tokens: int) -> Optional[StoreDB]:
             )
             # Aceptar tanto 200 (con contenido) como 204 (sin contenido) como respuestas exitosas
             if response.status_code == 200:
-                return StoreDB(**response.json())
+                store_data = response.json()
+                store = StoreDB.model_validate(store_data)
+                return store.model_dump(mode="json")
             elif response.status_code == 204:
                 # Para 204 No Content, obtenemos la tienda actualizada con una llamada adicional
                 logger.info(

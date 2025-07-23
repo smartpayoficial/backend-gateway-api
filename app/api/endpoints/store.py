@@ -19,7 +19,7 @@ router = APIRouter()
 # Endpoint eliminado - ahora se usa create_store (anteriormente create_and_deploy_store)
 
 
-@router.get("/{store_id}", response_model=StoreDB)
+@router.get("/{store_id}")
 async def read_store_by_id(store_id: UUID):
     """
     Obtiene una tienda por su ID incluyendo la entidad completa del admin cuando esté disponible.
@@ -30,7 +30,7 @@ async def read_store_by_id(store_id: UUID):
     return store
 
 
-@router.get("/", response_model=List[StoreDB])
+@router.get("/")
 async def read_stores(country_id: Optional[UUID] = None, plan: Optional[str] = None):
     """
     Obtiene todas las tiendas con filtros opcionales, incluyendo la entidad completa del admin cuando esté disponible.
@@ -59,7 +59,7 @@ async def read_stores(country_id: Optional[UUID] = None, plan: Optional[str] = N
         )
 
 
-@router.get("/country/{country_id}", response_model=List[StoreDB])
+@router.get("/country/{country_id}")
 async def read_stores_by_country(country_id: UUID):
     """
     Obtiene todas las tiendas de un país específico, incluyendo la entidad completa del admin cuando esté disponible.
@@ -92,7 +92,7 @@ async def read_stores_by_country(country_id: UUID):
         )
 
 
-@router.patch("/{store_id}", response_model=StoreDB)
+@router.patch("/{store_id}")
 async def update_store(store_id: UUID, store_in: StoreUpdate):
     """
     Actualiza los datos de una tienda existente.
@@ -103,7 +103,7 @@ async def update_store(store_id: UUID, store_in: StoreUpdate):
     return store
 
 
-@router.patch("/{store_id}/tokens", response_model=StoreDB)
+@router.patch("/{store_id}/tokens")
 async def update_store_tokens(store_id: UUID, tokens: int):
     """
     Actualiza la cantidad de tokens disponibles de una tienda.
