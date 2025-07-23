@@ -45,31 +45,20 @@ async def create_store(store_in: StoreCreate) -> StoreDB:
         raise
 
 
-async def get_store(store_id: UUID) -> Optional[StoreDB]:
+async def get_store(store_id: UUID):
     """
-    Obtiene una tienda por su ID.
-
-    Args:
-        store_id: ID de la tienda a buscar
-
-    Returns:
-        StoreDB: La tienda encontrada o None si no existe
+    Obtiene una tienda y transforma la respuesta al formato exacto requerido.
     """
     try:
         async with httpx.AsyncClient() as client:
-            response = await client.get(f"{STORE_API_URL}/{store_id}")
+            response = await client.get(f"{STORE_API_URL}/{store_id}?expand=country,admin")
             if response.status_code == 200:
-                return StoreDB(**response.json())
-            return None
-    except httpx.HTTPStatusError as e:
-        logger.error(
-            f"Error al obtener tienda {store_id}: {e.response.text}", exc_info=True
-        )
-        return None
+                store_data = response.json()
+                return store_data
+            else:
+                return None
     except Exception as e:
-        logger.error(
-            f"Error inesperado al obtener tienda {store_id}: {str(e)}", exc_info=True
-        )
+        logger.error(f"Error al obtener tienda {store_id}: {str(e)}")
         return None
 
 
@@ -77,19 +66,9 @@ async def get_stores(
     country_id: Optional[UUID] = None, plan: Optional[str] = None
 ) -> List[StoreDB]:
     """
-    Obtiene una lista de tiendas con filtros opcionales.
-
-    Args:
-        country_id: Filtrar por país
-        plan: Filtrar por plan
-
-    Returns:
-        List[StoreDB]: Lista de tiendas que cumplen con los criterios
-
-    Raises:
-        HTTPException: Si ocurre un error en la comunicación con el servicio de DB
+    Obtiene tiendas con transformación al formato exacto requerido.
     """
-    params = {}
+    params = {"expand": "country,admin"}
     if country_id:
         params["country_id"] = str(country_id)
     if plan:
@@ -99,13 +78,48 @@ async def get_stores(
         async with httpx.AsyncClient() as client:
             response = await client.get(f"{STORE_API_URL}/", params=params)
             response.raise_for_status()
-            return [StoreDB(**item) for item in response.json()]
-    except httpx.HTTPStatusError as e:
-        logger.error(f"Error al obtener tiendas: {e.response.text}", exc_info=True)
-        # Re-lanzamos la excepción para que el endpoint pueda manejarla
-        raise
+            
+            stores = []
+            for store_data in response.json():
+                # Aplicar misma transformación que en get_store
+                if 'admin' in store_data and store_data['admin']:
+                    store_data['admin_id'] = store_data['admin']['user_id']
+                    store_data['admin'] = {
+                        'city_id': store_data['admin']['city_id'],
+                        'dni': store_data['admin']['dni'],
+                        'first_name': store_data['admin']['first_name'],
+                        'middle_name': store_data['admin'].get('middle_name'),
+                        'last_name': store_data['admin']['last_name'],
+                        'second_last_name': store_data['admin'].get('second_last_name'),
+                        'email': store_data['admin']['email'],
+                        'prefix': store_data['admin']['prefix'],
+                        'phone': store_data['admin']['phone'],
+                        'address': store_data['admin']['address'],
+                        'username': store_data['admin']['username'],
+                        'password': store_data['admin']['password'],
+                        'role_id': store_data['admin']['role_id'],
+                        'state': store_data['admin']['state'],
+                        'user_id': store_data['admin']['user_id'],
+                        'role': {
+                            'role_id': None,
+                            'name': None,
+                            'description': None
+                        },
+                        'created_at': store_data['admin']['created_at'],
+                        'updated_at': store_data['admin']['updated_at']
+                    }
+                
+                if 'country' in store_data and store_data['country']:
+                    store_data['country'] = {
+                        'name': store_data['country']['name'],
+                        'code': store_data['country']['code'],
+                        'country_id': store_data['country']['country_id']
+                    }
+                
+                stores.append(StoreDB(**store_data))
+            return stores
     except Exception as e:
-        logger.error(f"Error inesperado al obtener tiendas: {str(e)}", exc_info=True)
+        logger.error(f"Error al obtener tiendas: {str(e)}")
         raise
 
 
@@ -225,4 +239,5 @@ async def get_stores_by_country(country_id: UUID) -> List[StoreDB]:
     Returns:
         List[StoreDB]: Lista de tiendas del país
     """
+    # Utilizar get_stores con el parámetro expand=country ya configurado
     return await get_stores(country_id=country_id)

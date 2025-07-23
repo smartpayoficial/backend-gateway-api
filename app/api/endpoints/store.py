@@ -22,7 +22,7 @@ router = APIRouter()
 @router.get("/{store_id}", response_model=StoreDB)
 async def read_store_by_id(store_id: UUID):
     """
-    Obtiene una tienda por su ID.
+    Obtiene una tienda por su ID incluyendo la entidad completa del admin cuando esté disponible.
     """
     store = await store_service.get_store(store_id)
     if not store:
@@ -33,7 +33,7 @@ async def read_store_by_id(store_id: UUID):
 @router.get("/", response_model=List[StoreDB])
 async def read_stores(country_id: Optional[UUID] = None, plan: Optional[str] = None):
     """
-    Obtiene todas las tiendas con filtros opcionales.
+    Obtiene todas las tiendas con filtros opcionales, incluyendo la entidad completa del admin cuando esté disponible.
     """
     try:
         return await store_service.get_stores(country_id=country_id, plan=plan)
@@ -62,7 +62,7 @@ async def read_stores(country_id: Optional[UUID] = None, plan: Optional[str] = N
 @router.get("/country/{country_id}", response_model=List[StoreDB])
 async def read_stores_by_country(country_id: UUID):
     """
-    Obtiene todas las tiendas de un país específico.
+    Obtiene todas las tiendas de un país específico, incluyendo la entidad completa del admin cuando esté disponible.
     """
     try:
         return await store_service.get_stores_by_country(country_id)
@@ -123,6 +123,53 @@ async def delete_store(store_id: UUID):
     if not success:
         raise HTTPException(status_code=404, detail="Tienda no encontrada")
     return Response(status_code=status.HTTP_204_NO_CONTENT)
+
+
+@router.post("/deploy", status_code=status.HTTP_201_CREATED)
+async def create_and_deploy_store(store_in: StoreCreate):
+    """
+    Crea y despliega una nueva tienda, manejando correctamente la entidad admin cuando esté presente.
+    """
+    try:
+        # Crear la tienda (admin_id se maneja automáticamente desde StoreCreate)
+        store = await store_service.create_store(store_in)
+        if not store:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="No se pudo crear la tienda"
+            )
+
+        store_id = store.id
+        
+        # Realizar el deployment
+        deployment_info = await deployment_service.deploy_store(store_id)
+        if not deployment_info:
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail="No se pudo desplegar la tienda"
+            )
+
+        # Obtener la tienda con todos los datos actualizados (incluyendo admin completo si existe)
+        full_store = await store_service.get_store(store_id)
+        
+        return {
+            "store": full_store,
+            "deployment": {
+                "back_link": deployment_info["back_link"],
+                "db_link": deployment_info["db_link"],
+                "ports": deployment_info["ports"],
+                "status": "deployed"
+            }
+        }
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Error inesperado en deployment de tienda: {str(e)}", exc_info=True)
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Error inesperado durante el deployment: {str(e)}"
+        )
 
 
 @router.post("/", status_code=status.HTTP_201_CREATED)
@@ -229,78 +276,39 @@ async def create_store(store_in: StoreCreate):
 @router.post("/{store_id}/deploy", status_code=status.HTTP_200_OK)
 async def deploy_existing_store(store_id: UUID):
     """
-    Despliega automáticamente una versión del backend y DB para una tienda existente.
-    
-    Este endpoint:
-    1. Verifica que la tienda existe
-    2. Crea directorios únicos para el backend y DB de la tienda
-    3. Copia los archivos necesarios
-    4. Configura puertos únicos para evitar conflictos
-    5. Levanta los servicios usando Docker Compose
-    6. Actualiza la tienda con los links generados
-    
-    Args:
-        store_id: ID de la tienda existente a desplegar
-        
-    Returns:
-        Información del deployment incluyendo links y puertos asignados
+    Despliega una tienda existente, incluyendo la entidad completa del admin si está disponible.
     """
     try:
-        # Verificar que la tienda existe
+        # Verificar que la tienda existe y obtener datos actuales
         store = await store_service.get_store(store_id)
         if not store:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Tienda no encontrada"
             )
-        
-        # Verificar si ya está desplegada
-        if store.back_link:
-            logger.warning(f"Tienda {store_id} ya tiene un deployment activo")
-            return {
-                "message": "Tienda ya desplegada",
-                "store_id": str(store_id),
-                "back_link": store.back_link,
-                "db_link": store.db_link,
-                "status": "already_deployed"
-            }
-        
-        logger.info(f"Iniciando deployment para tienda existente {store_id}")
-        
+
         # Realizar el deployment
         deployment_info = await deployment_service.deploy_store(store_id)
-        
         if not deployment_info:
             raise HTTPException(
                 status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error durante el proceso de deployment"
+                detail="No se pudo desplegar la tienda"
             )
-        
-        # Actualizar la tienda con los links generados
-        from app.models.store import StoreUpdate
-        store_update = StoreUpdate(
-            back_link=deployment_info["back_link"],
-            db_link=deployment_info["db_link"]
-        )
-        
-        updated_store = await store_service.update_store(store_id, store_update)
-        if not updated_store:
-            logger.error(f"Error actualizando tienda {store_id} con links de deployment")
-            # No fallar el deployment por esto, solo log
-        
-        logger.info(f"Deployment completado exitosamente para tienda {store_id}")
+
+        # Obtener la tienda con todos los datos actualizados (incluyendo admin completo)
+        full_store = await store_service.get_store(store_id)
         
         return {
-            "message": "Deployment completado exitosamente",
-            "store_id": str(store_id),
-            "back_link": deployment_info["back_link"],
-            "db_link": deployment_info["db_link"],
-            "ports": deployment_info["ports"],
-            "status": "deployed"
+            "store": full_store,
+            "deployment": {
+                "back_link": deployment_info["back_link"],
+                "db_link": deployment_info["db_link"],
+                "ports": deployment_info["ports"],
+                "status": "deployed"
+            }
         }
         
     except HTTPException:
-        # Re-lanzar HTTPExceptions tal como están
         raise
     except Exception as e:
         logger.error(f"Error inesperado en deployment de tienda {store_id}: {str(e)}", exc_info=True)
