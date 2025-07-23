@@ -21,16 +21,20 @@ REDIRECT_URI = os.getenv("REDIRECT_URI")
 async def auth_callback(request: Request):
     code = request.query_params.get("code")
 
-    # 1. Obtener el token
-    token_res = requests.post(
-        "https://oauth2.googleapis.com/token",
-        data={
+    tokenData = {
             "code": code,
             "client_id": CLIENT_ID,
             "client_secret": CLIENT_SECRET,
             "redirect_uri": REDIRECT_URI,
             "grant_type": "authorization_code",
-        },
+        }
+
+    print("Token data:", tokenData)
+    
+    # 1. Obtener el token
+    token_res = requests.post(
+        "https://oauth2.googleapis.com/token",
+        data = tokenData,
     )
 
     access_token = token_res.json().get("access_token")
