@@ -37,7 +37,12 @@ async def create_store(store_in: StoreCreate) -> dict:
             response.raise_for_status()  # Will raise an exception for 4xx/5xx responses
             store_data = response.json()
             store = StoreDB.model_validate(store_data)
-            return store.model_dump(mode="json")
+            # Serializamos excluyendo la propiedad admin_id para evitar errores
+            result = store.model_dump(mode="json", exclude={"admin_id"})
+            # Agregamos manualmente el admin_id si existe
+            if store.admin:
+                result["admin_id"] = str(store.admin.user_id)
+            return result
     except httpx.HTTPStatusError as e:
         logger.error(f"Error al crear tienda: {e.response.text}", exc_info=True)
         # Re-lanzamos la excepción para que el endpoint pueda manejarla
@@ -59,7 +64,12 @@ async def get_store(store_id: UUID):
                 # Convertimos a StoreDB para validar y luego a dict para retornar
                 # Esto asegura que la estructura sea exactamente la que necesitamos
                 store = StoreDB.model_validate(store_data)
-                return store.model_dump(mode="json")
+                # Serializamos excluyendo la propiedad admin_id para evitar errores
+                result = store.model_dump(mode="json", exclude={"admin_id"})
+                # Agregamos manualmente el admin_id si existe
+                if store.admin:
+                    result["admin_id"] = str(store.admin.user_id)
+                return result
             else:
                 return None
     except Exception as e:
@@ -89,7 +99,12 @@ async def get_stores(
                 # Usar Pydantic para validar y transformar
                 store = StoreDB.model_validate(store_data)
                 # Convertir a diccionario para mantener el formato exacto requerido
-                stores.append(store.model_dump(mode="json"))
+                # Excluimos la propiedad admin_id que causa problemas de serialización
+                store_dict = store.model_dump(mode="json", exclude={"admin_id"})
+                # Agregamos manualmente el admin_id si existe
+                if store.admin:
+                    store_dict["admin_id"] = str(store.admin.user_id)
+                stores.append(store_dict)
             return stores
     except Exception as e:
         logger.error(f"Error al obtener tiendas: {str(e)}")
@@ -117,7 +132,12 @@ async def update_store(store_id: UUID, store_in: StoreUpdate) -> Optional[dict]:
             if response.status_code == 200:
                 store_data = response.json()
                 store = StoreDB.model_validate(store_data)
-                return store.model_dump(mode="json")
+                # Serializamos excluyendo la propiedad admin_id para evitar errores
+                result = store.model_dump(mode="json", exclude={"admin_id"})
+                # Agregamos manualmente el admin_id si existe
+                if store.admin:
+                    result["admin_id"] = str(store.admin.user_id)
+                return result
             elif response.status_code == 204:
                 # Para 204 No Content, obtenemos la tienda actualizada con una llamada adicional
                 logger.info(
@@ -184,7 +204,12 @@ async def update_store_tokens(store_id: UUID, tokens: int) -> Optional[dict]:
             if response.status_code == 200:
                 store_data = response.json()
                 store = StoreDB.model_validate(store_data)
-                return store.model_dump(mode="json")
+                # Serializamos excluyendo la propiedad admin_id para evitar errores
+                result = store.model_dump(mode="json", exclude={"admin_id"})
+                # Agregamos manualmente el admin_id si existe
+                if store.admin:
+                    result["admin_id"] = str(store.admin.user_id)
+                return result
             elif response.status_code == 204:
                 # Para 204 No Content, obtenemos la tienda actualizada con una llamada adicional
                 logger.info(
