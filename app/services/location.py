@@ -125,10 +125,12 @@ async def create_region(region_in: RegionCreate) -> Optional[RegionDB]:
         return None
 
 
-async def get_regions(country_id: Optional[UUID] = None) -> List[RegionDB]:
+async def get_regions(country_id: Optional[UUID] = None, name: Optional[str] = None) -> List[RegionDB]:
     params = {}
     if country_id:
         params["country_id"] = str(country_id)
+    if name:
+        params["name"] = name
         
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{USER_SVC_URL}/api/v1/regions/", params=params)

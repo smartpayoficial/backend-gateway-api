@@ -22,9 +22,9 @@ async def create_region(region_in: RegionCreate):
 
 
 @router.get("/", response_model=List[RegionDB])
-async def get_all_regions(country_id: Optional[UUID] = None):
+async def get_all_regions(country_id: Optional[UUID] = None, name: Optional[str] = None):
     try:
-        return await location_service.get_regions(country_id=country_id)
+        return await location_service.get_regions(country_id=country_id, name=name)
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=e.response.status_code,
