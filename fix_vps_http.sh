@@ -15,7 +15,7 @@ echo "3. Actualizando Docker-compose.vps.yml para HTTP temporal..."
 # Cambiar puerto 443 a 8000 y deshabilitar SSL temporalmente
 sed -i 's/- "443:443"/- "8000:8000"/' docker/Docker-compose.vps.yml
 sed -i 's/PORT: 443/PORT: 8000/' docker/Docker-compose.vps.yml
-sed -i 's|https://smartpay-oficial.com/api/v1/google/auth/callback|https://smartpay-oficial.com:8000/api/v1/google/auth/callback|' docker/Docker-compose.vps.yml
+sed -i 's|https://smartpay-oficial.com:9443/api/v1/google/auth/callback|https://smartpay-oficial.com:8000/api/v1/google/auth/callback|' docker/Docker-compose.vps.yml
 sed -i 's|https://smartpay-oficial.com/reset-password|https://smartpay-oficial.com:8000/reset-password|' docker/Docker-compose.vps.yml
 
 # Comentar el montaje de certificados SSL temporalmente
