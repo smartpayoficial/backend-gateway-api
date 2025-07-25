@@ -53,9 +53,10 @@ async def read_user_by_id(user_id: UUID):
 
 
 @router.get("/", response_model=List[User])
-async def read_users(role_name: Optional[str] = None, state: Optional[str] = None):
+async def read_users(role_name: Optional[str] = None, state: Optional[str] = None, name: Optional[str] = None,
+                dni: Optional[str] = None):
     try:
-        return await user_service.get_users(role_name=role_name, state=state)
+        return await user_service.get_users(role_name=role_name, state=state, name=name, dni=dni)
     except httpx.HTTPStatusError as e:
         error_detail = e.response.text
         try:

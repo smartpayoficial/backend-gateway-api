@@ -54,13 +54,18 @@ async def get_user(user_id: UUID) -> Optional[User]:
 
 
 async def get_users(
-    role_name: Optional[str] = None, state: Optional[str] = None
+    role_name: Optional[str] = None, state: Optional[str] = None, name: Optional[str] = None,
+    dni: Optional[str] = None
 ) -> List[User]:
     params = {}
     if role_name:
         params["role_name"] = role_name
     if state:
         params["state"] = state
+    if name:
+        params["name"] = name
+    if dni:
+        params["dni"] = dni
 
     try:
         async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
