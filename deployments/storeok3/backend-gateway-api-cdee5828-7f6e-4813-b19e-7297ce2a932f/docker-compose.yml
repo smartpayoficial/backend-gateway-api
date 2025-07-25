@@ -1,0 +1,87 @@
+services:
+  api-cdee5828-7f6e-4813-b19e-7297ce2a932f:
+    image: docker-api
+    # No build context needed as we're using the existing image
+    container_name: backend-api-cdee5828-7f6e-4813-b19e-7297ce2a932f
+    expose:
+      - "8000"
+      - "8001"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8000
+      PYTHONUNBUFFERED: 1
+      PYTHONPATH: /app
+      SOCKETIO_ASYNC_MODE: asgi
+      DB_API: http://smartpay-db-api-cdee5828-7f6e-4813-b19e-7297ce2a932f:8002
+      USER_SVC_URL: http://smartpay-db-api-cdee5828-7f6e-4813-b19e-7297ce2a932f:8002
+      REDIRECT_URI: https://storeok3.smartpay-oficial.com/api/v1/google/auth/callback
+      CLIENT_SECRET: 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
+      CLIENT_ID: 631597337466-dt7qitq7tg2022rhje5ib5sk0eua6t79.apps.googleusercontent.com
+      SMTP_SERVER: smtp.gmail.com
+      SMTP_PORT: 587
+      SMTP_USERNAME: smartpay.noreply@gmail.com
+      SMTP_PASSWORD: 'jgiz oqck snoj icwz'
+      EMAIL_FROM: smartpay.noreply@gmail.com
+      RESET_PASSWORD_BASE_URL: https://storeok3.smartpay-oficial.com/reset-password
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.storeok3.rule=Host(`storeok3.smartpay-oficial.com`)"
+      - "traefik.http.routers.storeok3.entrypoints=https"
+      - "traefik.http.routers.storeok3.tls=true"
+      - "traefik.http.routers.storeok3.tls.certresolver=letsencrypt"
+      - "traefik.http.services.storeok3.loadbalancer.server.port=8000"
+      # WebSocket configuration
+      - "traefik.http.routers.storeok3-ws.rule=Host(`storeok3.smartpay-oficial.com`) && PathPrefix(`/ws`)"
+      - "traefik.http.routers.storeok3-ws.entrypoints=https"
+      - "traefik.http.routers.storeok3-ws.tls=true"
+      - "traefik.http.routers.storeok3-ws.tls.certresolver=letsencrypt"
+      - "traefik.http.services.storeok3-ws.loadbalancer.server.port=8001"
+    # No need to mount volumes as we're using the existing image
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000", "--no-use-colors"]
+    restart: unless-stopped
+    extra_hosts:
+      - "host.docker.internal:host-gateway"
+    sysctls:
+      - net.core.somaxconn=65535
+    ulimits:
+      nofile:
+        soft: 65535
+        hard: 65535
+    networks:
+      - smartpay-cdee5828-7f6e-4813-b19e-7297ce2a932f
+      - traefik-public
+
+  smartpay-db-api-cdee5828-7f6e-4813-b19e-7297ce2a932f:
+    image: smartpay-db-api
+    container_name: smartpay-db-api-cdee5828-7f6e-4813-b19e-7297ce2a932f
+    expose:
+      - "8002"
+    environment:
+      HOST: 0.0.0.0
+      PORT: 8002
+      PYTHONUNBUFFERED: 1
+      PYTHONPATH: /app
+      WEB_APP_VERSION: "0.1.0"
+      WEP_APP_TITLE: smartpay-db
+      WEP_APP_DESCRIPTION: Database service for SmartPay
+      ENVIRONMENT: prod
+      POSTGRES_DATABASE_URL: postgres://postgres:postgres@smartpay-db-v12:5432/smartpay
+      DEFAULT_DATA: "False"
+    labels:
+      - "traefik.enable=true"
+      - "traefik.http.routers.db-storeok3.rule=Host(`db-storeok3.smartpay-oficial.com`)"
+      - "traefik.http.routers.db-storeok3.entrypoints=https"
+      - "traefik.http.routers.db-storeok3.tls=true"
+      - "traefik.http.routers.db-storeok3.tls.certresolver=letsencrypt"
+      - "traefik.http.services.db-storeok3.loadbalancer.server.port=8002"
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002", "--no-use-colors"]
+    restart: unless-stopped
+    networks:
+      - smartpay-cdee5828-7f6e-4813-b19e-7297ce2a932f
+      - traefik-public
+
+networks:
+  smartpay-cdee5828-7f6e-4813-b19e-7297ce2a932f:
+    driver: bridge
+  traefik-public:
+    external: true

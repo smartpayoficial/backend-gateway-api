@@ -1,0 +1,15 @@
+http:
+  routers:
+    dashboard:
+      rule: "Host(`traefik.smartpay-oficial.com`)"
+      service: "api@internal"
+      tls:
+        certResolver: letsencrypt
+      middlewares:
+        - auth
+
+  middlewares:
+    auth:
+      basicAuth:
+        users:
+          - "admin:$apr1$ruca84Hq$mbjdMZpxBhuM1Zh4POr4d1" # admin:smartpay (use htpasswd to generate your own)

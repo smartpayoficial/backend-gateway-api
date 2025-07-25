@@ -52,7 +52,7 @@ services:
     image: postgres:12
     container_name: docker-smartpay-db-v12-1
     ports:
-      - "5437:5432"
+      - "5438:5432"
     environment:
       POSTGRES_USER: postgres
       POSTGRES_PASSWORD: postgres

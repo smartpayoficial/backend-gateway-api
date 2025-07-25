@@ -208,12 +208,6 @@ class DeploymentService:
       PORT: 8002
       PYTHONUNBUFFERED: 1
       PYTHONPATH: /app
-      WEB_APP_VERSION: "0.1.0"
-      WEP_APP_TITLE: smartpay-db
-      WEP_APP_DESCRIPTION: Database service for SmartPay
-      ENVIRONMENT: prod
-      POSTGRES_DATABASE_URL: postgres://postgres:postgres@smartpay-db-v12:5432/smartpay
-      DEFAULT_DATA: "False"
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.db-{store_name}.rule=Host(`db-{store_name}.smartpay-oficial.com`)"

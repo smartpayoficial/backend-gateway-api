@@ -49,6 +49,58 @@ services:
     networks:
       - smartpay
 
+  # Servicio de base de datos para desarrollo
+  smartpay-db:
+    image: postgres:12
+    container_name: smartpay-db-dev
+    ports:
+      - "5436:5432"
+    environment:
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+      POSTGRES_DB: smartpay
+    volumes:
+      - smartpay-db-dev:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: unless-stopped
+    networks:
+      - smartpay
+      
+  # Servicio de API de base de datos para desarrollo
+  smartpay-db-api:
+    build:
+      context: ../../db-smartpay
+      dockerfile: docker/Dockerfile
+    container_name: smartpay-db-api-dev
+    ports:
+      - "8002:8002"
+    environment:
+      - PYTHONUNBUFFERED=1
+      - WEB_APP_VERSION=0.1.0
+      - WEP_APP_TITLE=smartpay-db
+      - WEP_APP_DESCRIPTION=Database service for SmartPay
+      - ENVIRONMENT=dev
+      - POSTGRES_DATABASE_URL=postgres://postgres:postgres@smartpay-db:5432/smartpay
+      - DEFAULT_DATA=False
+      - PYTHONPATH=/usr/src/app
+    volumes:
+      - ../../db-smartpay:/usr/src/app
+    command: ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002", "--reload"]
+    depends_on:
+      smartpay-db:
+        condition: service_healthy
+    restart: unless-stopped
+    networks:
+      - smartpay
+
 networks:
   smartpay:
-    external: true
+    name: smartpay
+    driver: bridge
+
+volumes:
+  smartpay-db-dev:
