@@ -212,8 +212,22 @@ class DeploymentService:
       WEP_APP_TITLE: smartpay-db
       WEP_APP_DESCRIPTION: Database service for SmartPay
       ENVIRONMENT: prod
-      POSTGRES_DATABASE_URL: postgres://postgres:postgres@smartpay-db-v12:5432/smartpay
+      POSTGRES_DATABASE_URL: postgres://postgres:postgres@postgres-{store_id}:5432/smartpay
       DEFAULT_DATA: "False"
+      DB_HOST: postgres-{store_id}
+      DB_PORT: "5432"
+      DB_NAME: smartpay
+      DB_USER: postgres
+      DB_PASSWORD: postgres
+    depends_on:
+      postgres:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8002/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 40s
     labels:
       - "traefik.enable=true"
       - "traefik.http.routers.db-{store_name}.rule=Host(`db-{store_name}.smartpay-oficial.com`)"
@@ -226,12 +240,35 @@ class DeploymentService:
     networks:
       - smartpay-{store_id}
       - traefik-public
+      - database_network
+
+  postgres-{store_id}:
+    image: postgres:12
+    container_name: postgres-{store_id}
+    environment:
+      POSTGRES_DB: smartpay
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: postgres
+    volumes:
+      - postgres_data_{store_id}:/var/lib/postgresql/data
+    ports:
+      - "{db_port}:5432"
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U postgres"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    networks:
+      - database_network
+      - smartpay-{store_id}
 
 networks:
   smartpay-{store_id}:
     driver: bridge
   traefik-public:
     external: true
+  database_network:
+    driver: bridge
 """
             
             docker_compose_path = os.path.join(backend_path, "docker-compose.yml")
