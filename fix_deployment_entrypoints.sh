@@ -6,7 +6,7 @@
 echo "Corrigiendo entrypoints en el archivo deployment.py..."
 
 # Ruta al archivo deployment.py
-DEPLOYMENT_FILE="/home/danielamg/Escritorio/trabajo/olimpo/smart-pay/backend-gateway-api/app/services/deployment.py"
+DEPLOYMENT_FILE="/home/smartpayvps/backend-gateway-api/app/services/deployment.py"
 
 # Hacer una copia de seguridad
 cp "$DEPLOYMENT_FILE" "${DEPLOYMENT_FILE}.bak"
