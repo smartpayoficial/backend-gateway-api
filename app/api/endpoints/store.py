@@ -182,31 +182,27 @@ async def create_and_deploy_store(store_in: StoreCreate):
         )
 
 
-@router.post("/", status_code=status.HTTP_201_CREATED)
+@router.post("/", status_code=status.HTTP_201_CREATED, response_model=StoreDB)
 async def create_store(store_in: StoreCreate):
     """
-    Crea una nueva tienda y despliega automáticamente una versión del backend y DB.
+    Crea una nueva tienda en la base de datos.
     
-    Este endpoint:
-    1. Crea la tienda con los datos proporcionados
-    2. Crea directorios únicos para el backend y DB de la tienda
-    3. Copia los archivos necesarios
-    4. Configura puertos únicos para evitar conflictos
-    5. Levanta los servicios usando Docker Compose
-    6. Actualiza la tienda con los links generados
+    Este endpoint simplemente crea el registro de la tienda sin realizar ningún despliegue.
     
     Args:
         store_in: Datos de la tienda a crear (nombre, country_id, plan, tokens_disponibles)
         
     Returns:
-        Información de la tienda creada y su deployment incluyendo links y puertos asignados
+        La tienda creada
     """
     try:
-        # Crear la tienda primero
+        # Crear la tienda en la base de datos
         logger.info(f"Creando nueva tienda: {store_in.nombre}")
         
         try:
             store = await store_service.create_store(store_in)
+            logger.info(f"Tienda creada exitosamente: {store_in.nombre}")
+            return store
         except httpx.HTTPStatusError as e:
             error_detail = e.response.text
             try:
@@ -218,99 +214,15 @@ async def create_store(store_in: StoreCreate):
             
             logger.error(f"Error al crear tienda: {error_detail}", exc_info=True)
             raise HTTPException(status_code=e.response.status_code, detail=error_detail)
-        except Exception as e:
-            logger.error(f"Error inesperado al crear tienda: {str(e)}", exc_info=True)
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail=f"Error inesperado al crear tienda: {str(e)}"
-            )
-        
-        # Manejar tanto objetos como diccionarios
-        if hasattr(store, 'id'):
-            store_id = store.id
-        elif isinstance(store, dict) and 'id' in store:
-            store_id = store['id']
-        else:
-            logger.error("No se pudo obtener el ID de la tienda creada")
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error al obtener el ID de la tienda creada"
-            )
-            
-        logger.info(f"Tienda creada exitosamente con ID: {store_id}")
-        logger.info(f"Iniciando deployment para tienda {store_id}")
-        
-        # Realizar el deployment
-        deployment_info = await deployment_service.deploy_store(store_id)
-        
-        if not deployment_info:
-            raise HTTPException(
-                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-                detail="Error durante el proceso de deployment"
-            )
-        
-        # Actualizar la tienda con los links generados
-        from app.models.store import StoreUpdate
-        store_update = StoreUpdate(
-            back_link=deployment_info["back_link"],
-            db_link=deployment_info["db_link"]
-        )
-        
-        updated_store = await store_service.update_store(store_id, store_update)
-        if not updated_store:
-            logger.error(f"Error actualizando tienda {store_id} con links de deployment")
-            # No fallar el deployment por esto, solo log
-        
-        logger.info(f"Deployment completado exitosamente para tienda {store_id}")
-        
-        # Preparar la respuesta manejando tanto objetos como diccionarios
-        store_response = {}
-        
-        # Extraer datos de la tienda manejando tanto objetos como diccionarios
-        if hasattr(store, 'id'):
-            # Es un objeto con atributos
-            store_response = {
-                "id": str(store.id),
-                "nombre": store.nombre,
-                "country_id": str(store.country_id),
-                "plan": store.plan,
-                "tokens_disponibles": store.tokens_disponibles,
-                "created_at": store.created_at.isoformat() if hasattr(store.created_at, 'isoformat') else store.created_at,
-                "back_link": deployment_info["back_link"],
-                "db_link": deployment_info["db_link"]
-            }
-        elif isinstance(store, dict):
-            # Es un diccionario
-            store_response = {
-                "id": str(store.get('id')),
-                "nombre": store.get('nombre'),
-                "country_id": str(store.get('country_id')),
-                "plan": store.get('plan'),
-                "tokens_disponibles": store.get('tokens_disponibles'),
-                "created_at": store.get('created_at'),
-                "back_link": deployment_info["back_link"],
-                "db_link": deployment_info["db_link"]
-            }
-        
-        return {
-            "message": "Tienda creada y deployment completado exitosamente",
-            "store": store_response,
-            "deployment": {
-                "back_link": deployment_info["back_link"],
-                "db_link": deployment_info["db_link"],
-                "ports": deployment_info["ports"],
-                "status": "deployed"
-            }
-        }
         
     except HTTPException:
         # Re-lanzar HTTPExceptions tal como están
         raise
     except Exception as e:
-        logger.error(f"Error inesperado en deployment de tienda {store_id}: {str(e)}", exc_info=True)
+        logger.error(f"Error inesperado al crear tienda: {str(e)}", exc_info=True)
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
-            detail=f"Error inesperado durante el deployment: {str(e)}"
+            detail=f"Error inesperado al crear tienda: {str(e)}"
         )
 
 
