@@ -6,6 +6,26 @@ from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
 from .city import CityDB
 from .role import Role
+from .store import StoreDB
+
+
+# Simplified store model for user response
+class StoreResponse(BaseModel):
+    id: UUID
+    nombre: str
+    country_id: Optional[UUID] = None
+    plan: Optional[str] = None
+    tokens_disponibles: Optional[int] = None
+    back_link: Optional[str] = None
+    db_link: Optional[str] = None
+    created_at: Optional[datetime] = None
+    updated_at: Optional[datetime] = None
+    
+    model_config = ConfigDict(
+        from_attributes=True,
+        extra="ignore",
+        arbitrary_types_allowed=True,
+    )
 
 
 class UserBase(BaseModel):
@@ -27,9 +47,10 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     city_id: Optional[UUID] = None
     role_id: Optional[UUID] = None
+    store: Optional[UUID] = None
     password: str
 
-    @field_validator("city_id", "role_id", mode="before")
+    @field_validator("city_id", "role_id", "store", mode="before")
     @classmethod
     def to_uuid(cls, v):
         if isinstance(v, str):
@@ -51,6 +72,7 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     password: Optional[str] = None
     role_id: Optional[UUID] = None
+    store: Optional[UUID] = None
     state: Optional[str] = None
 
 
@@ -66,6 +88,7 @@ class User(UserBase):
     updated_at: Optional[datetime] = None
     role: Optional[Role] = None
     city: Optional[CityDB] = None
+    store: Optional[StoreResponse] = None
 
 
 class UserPaymentResponse(BaseModel):
