@@ -47,10 +47,10 @@ class UserBase(BaseModel):
 class UserCreate(UserBase):
     city_id: Optional[UUID] = None
     role_id: Optional[UUID] = None
-    store: Optional[UUID] = None
+    store_id: Optional[UUID] = None
     password: str
 
-    @field_validator("city_id", "role_id", "store", mode="before")
+    @field_validator("city_id", "role_id", "store_id", mode="before")
     @classmethod
     def to_uuid(cls, v):
         if isinstance(v, str):
@@ -72,7 +72,7 @@ class UserUpdate(BaseModel):
     username: Optional[str] = None
     password: Optional[str] = None
     role_id: Optional[UUID] = None
-    store: Optional[UUID] = None
+    store_id: Optional[UUID] = None
     state: Optional[str] = None
 
 

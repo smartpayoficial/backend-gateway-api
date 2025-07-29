@@ -88,16 +88,15 @@ async def update_user(user_id: UUID, user_in: UserUpdate) -> Optional[User]:
         async with httpx.AsyncClient(timeout=TIMEOUT_SECONDS) as client:
             response = await client.patch(
                 f"{USER_API_URL}/{user_id}",
-                json=user_in.model_dump(mode="json", exclude_unset=True),
+                json=user_in.model_dump(mode="json", exclude_none=True),
             )
-            if response.status_code == 200:
-                return User(**response.json())
-            return None
+            response.raise_for_status()  # Lanza una excepción para errores 4xx/5xx
+            return User(**response.json())
     except httpx.HTTPStatusError as e:
         logger.error(
             f"Error al actualizar usuario {user_id}: {e.response.text}", exc_info=True
         )
-        return None
+        raise
     except Exception as e:
         logger.error(
             f"Error inesperado al actualizar usuario {user_id}: {str(e)}", exc_info=True

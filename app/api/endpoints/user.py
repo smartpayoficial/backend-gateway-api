@@ -99,7 +99,7 @@ async def delete_user(user_id: UUID):
 async def create_user_for_store(store_id: UUID, user_in: UserCreate):
     """Create a new user associated with a specific store"""
     # Set the store field in the user_in object
-    user_in.store = store_id
+    user_in.store_id = store_id
     try:
         return await user_service.create_user(user_in)
     except httpx.HTTPStatusError as e:
@@ -125,7 +125,7 @@ async def create_user_for_store(store_id: UUID, user_in: UserCreate):
 async def update_user_store(store_id: UUID, user_id: UUID):
     """Associate an existing user with a specific store"""
     # Create an update object with just the store field
-    user_update = UserUpdate(store=store_id)
+    user_update = UserUpdate(store_id=store_id)
     try:
         user = await user_service.update_user(user_id, user_update)
         if not user:
