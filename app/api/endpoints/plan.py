@@ -60,10 +60,10 @@ async def create_plan(new_plan: PlanCreate):
 
 @router.get("/", response_model=List[PlanRaw], status_code=status.HTTP_200_OK)
 async def get_all_plans(
-    device_id: Optional[UUID] = None, user_id: Optional[UUID] = None
+    device_id: Optional[UUID] = None, user_id: Optional[UUID] = None, store_id: Optional[UUID] = None
 ):
     try:
-        return await plan_service.get_all_plans(device_id=device_id, user_id=user_id)
+        return await plan_service.get_all_plans(device_id=device_id, user_id=user_id, store_id=store_id)
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=e.response.status_code,
