@@ -26,10 +26,13 @@ async def create_factory_reset_protection(
 
 async def get_factory_reset_protections(
     state: Optional[FactoryResetProtectionState] = None,
+    store_id: Optional[UUID] = None,
 ) -> List[FactoryResetProtectionResponse]:
     params = {}
     if state:
         params["state"] = state.value
+    if store_id:
+        params["store_id"] = str(store_id)
     async with httpx.AsyncClient() as client:
         response = await client.get(FRP_API_URL, params=params)
         response.raise_for_status()

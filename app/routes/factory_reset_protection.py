@@ -16,7 +16,22 @@ router = APIRouter(tags=["factoryResetProtection"])
 
 
 @router.post("/", response_model=FactoryResetProtectionResponse)
-async def create_factory_reset_protection(frp_in: FactoryResetProtectionCreate):
+async def create_factory_reset_protection(
+    frp_in: FactoryResetProtectionCreate,
+    store_id: Optional[UUID] = Query(None, description="Store ID to associate with this protection")):
+    """
+    Create a new factory reset protection
+    
+    The protection can be associated with a store either by:
+    - Providing store_id as a query parameter
+    - Including store_id in the request body
+    
+    If both are provided, the query parameter takes precedence
+    """
+    # If store_id is provided as a query parameter, it takes precedence over the one in the request body
+    if store_id:
+        frp_in.store_id = store_id
+        
     new_frp = await factory_reset_protection_service.create_factory_reset_protection(
         frp_in
     )
@@ -31,10 +46,20 @@ async def create_factory_reset_protection(frp_in: FactoryResetProtectionCreate):
 @router.get("/", response_model=List[FactoryResetProtectionResponse])
 async def get_factory_reset_protections(
     state: Optional[FactoryResetProtectionState] = Query(None),
+    store_id: Optional[UUID] = Query(None, description="Filter protections by store ID"),
 ):
+    """
+    Get all factory reset protections
+    
+    Optionally filter by:
+    - state: Filter by protection state (Active/Inactive)
+    - store_id: Filter by store ID
+    """
+    
     try:
         return await factory_reset_protection_service.get_factory_reset_protections(
-            state=state
+            state=state,
+            store_id=store_id
         )
     except httpx.HTTPStatusError as e:
         raise HTTPException(
