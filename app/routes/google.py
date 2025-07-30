@@ -1,4 +1,6 @@
 import os
+import json
+from urllib.parse import unquote
 
 import requests
 from fastapi import APIRouter,Request
@@ -20,6 +22,17 @@ REDIRECT_URI = os.getenv("REDIRECT_URI")
 @router.get("/auth/callback")
 async def auth_callback(request: Request):
     code = request.query_params.get("code")
+    state = request.query_params.get("state")
+
+    storeId = None
+    if state:
+        try:
+            decoded_state = unquote(state)
+            state_data = json.loads(decoded_state)
+            storeId = state_data.get("storeId")
+            print("Store ID recibido:", storeId)
+        except Exception as e:
+            print("Error al decodificar el parámetro state:", e)
 
     tokenData = {
             "code": code,
@@ -60,11 +73,13 @@ async def auth_callback(request: Request):
         )
     )
     if not exist:
+        print("Store ID que se usará para crear el registro:", storeId)
         factory = FactoryResetProtectionCreate(
             account_id=account_id,
             name=name,
             email=email,
             state=FactoryResetProtectionState.ACTIVE,
+            store_id=storeId
         )
         await factory_reset_protection_service.create_factory_reset_protection(factory)
     return RedirectResponse(f"https://smartpay-oficial.com/configuration")
