@@ -8,6 +8,7 @@ class ConfigurationBase(BaseModel):
     key: str
     value: str
     description: str
+    store_id: Optional[UUID] = None
 
 
 class ConfigurationCreate(ConfigurationBase):
@@ -18,6 +19,7 @@ class ConfigurationUpdate(BaseModel):
     key: Optional[str] = None
     value: Optional[str] = None
     description: Optional[str] = None
+    store_id: Optional[UUID] = None
 
 
 class ConfigurationDB(ConfigurationBase):

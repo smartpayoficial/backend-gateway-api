@@ -23,6 +23,7 @@ async def create_configuration(
 ) -> Optional[ConfigurationDB]:
     """
     Create a new configuration in the database
+    If store_id is provided, the configuration will be associated with that store
     """
     try:
         async with httpx.AsyncClient() as client:
@@ -41,14 +42,17 @@ async def create_configuration(
         return None
 
 
-async def get_configurations(key: Optional[str] = None) -> List[ConfigurationDB]:
+async def get_configurations(key: Optional[str] = None, store_id: Optional[UUID] = None) -> List[ConfigurationDB]:
     """
     Get all configurations from the database
     If key is provided, filter configurations by key (partial match)
+    If store_id is provided, filter configurations by store_id
     """
     params = {}
     if key:
         params["key"] = key
+    if store_id:
+        params["store_id"] = str(store_id)
 
     try:
         async with httpx.AsyncClient() as client:

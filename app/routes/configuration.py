@@ -15,10 +15,23 @@ router = APIRouter(tags=["configurations"])
 
 
 @router.post("/", response_model=ConfigurationDB, status_code=status.HTTP_201_CREATED)
-async def create_configuration(config: ConfigurationCreate):
+async def create_configuration(
+    config: ConfigurationCreate,
+    store_id: Optional[UUID] = Query(None, description="Store ID to associate with this configuration")
+):
     """
     Create a new configuration
+    
+    The configuration can be associated with a store either by:
+    - Providing store_id as a query parameter
+    - Including store_id in the request body
+    
+    If both are provided, the query parameter takes precedence
     """
+    # If store_id is provided as a query parameter, it takes precedence over the one in the request body
+    if store_id:
+        config.store_id = store_id
+    
     new_config = await configuration_service.create_configuration(config)
     if not new_config:
         raise HTTPException(
@@ -32,14 +45,17 @@ async def create_configuration(config: ConfigurationCreate):
 async def get_configurations(
     key: Optional[str] = Query(
         None, description="Filter configurations by key (partial match)"
+    ),
+    store_id: Optional[UUID] = Query(
+        None, description="Filter configurations by store ID"
     )
 ):
     """
     Get all configurations
-    Optionally filter by key (partial match)
+    Optionally filter by key (partial match) and/or store_id
     """
     try:
-        return await configuration_service.get_configurations(key=key)
+        return await configuration_service.get_configurations(key=key, store_id=store_id)
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=e.response.status_code,
