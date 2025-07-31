@@ -30,26 +30,26 @@ async def create_default_configurations(store_id: UUID):
     default_configs = [
         ConfigurationCreate(
             key="blocked_message",
-            value="Mensaje de Bloqueo",
-            description="Tu dispositivo ha sido bloqueado por no pago para seguirlo usando realiza el pago.",
+            value="Tu dispositivo ha sido bloqueado por no pago para seguirlo usando realiza el pago.",
+            description="Mensaje de Bloqueo",
             store_id=store_id
         ),
         ConfigurationCreate(
             key="blocked_sim",
-            value="Mensaje de Bloqueo Sim",
-            description="Esta Sim Card no esta activa por favor solicite la activación.",
+            value="Esta Sim Card no esta activa por favor solicite la activación.",
+            description="Mensaje de Bloqueo Sim",
             store_id=store_id
         ),
         ConfigurationCreate(
             key="payment_message",
-            value="Mensaje de Pago",
-            description="Has completado el pago total de tu dispositivo.\nLa aplicación SmartPay te solicitará desinstalará la desinstalación.",
+            value="Has completado el pago total de tu dispositivo.\nLa aplicación SmartPay te solicitará desinstalará la desinstalación.",
+            description="Mensaje de Pago",
             store_id=store_id
         ),
         ConfigurationCreate(
             key="payment_reminder",
-            value="Recordatorio de Pago",
-            description="Te recordamos que faltan %DAY% para la fecha de vencimiento de tu pago. ¡Gracias por tu atención!",
+            value="Te recordamos que faltan %DAY% para la fecha de vencimiento de tu pago. ¡Gracias por tu atención!",
+            description="Recordatorio de Pago",
             store_id=store_id
         )
     ]
