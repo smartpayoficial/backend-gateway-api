@@ -27,10 +27,11 @@ async def get_payments(
     state: Optional[PaymentState] = Query(None),
     plan_id: Optional[UUID] = Query(None),
     device_id: Optional[UUID] = Query(None),
+    store_id: Optional[UUID] = Query(None, description="Filter payments by store ID"),
 ):
     try:
         return await payment_service.get_payments(
-            state=state, plan_id=plan_id, device_id=device_id
+            state=state, plan_id=plan_id, device_id=device_id, store_id=store_id
         )
     except httpx.HTTPStatusError as e:
         raise HTTPException(

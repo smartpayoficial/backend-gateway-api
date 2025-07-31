@@ -26,7 +26,8 @@ async def create_payment(payment_in: PaymentCreate) -> Optional[PaymentResponse]
 async def get_payments(
     state: Optional[PaymentState] = None,
     plan_id: Optional[UUID] = None,
-    device_id: Optional[UUID] = None
+    device_id: Optional[UUID] = None,
+    store_id: Optional[UUID] = None
 ) -> List[PaymentResponse]:
     params = {}
     if state:
@@ -35,6 +36,8 @@ async def get_payments(
         params["plan_id"] = str(plan_id)
     if device_id:
         params["device_id"] = str(device_id)
+    if store_id:
+        params["store_id"] = str(store_id)
 
     async with httpx.AsyncClient() as client:
         response = await client.get(PAYMENT_API_URL, params=params)
