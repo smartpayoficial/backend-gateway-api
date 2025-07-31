@@ -54,6 +54,7 @@ class TokenOut(BaseModel):
     access_token: str
     refresh_token: str
     token_type: str = "bearer"
+    user_id: str
 
 
 @router.post("/login", response_model=TokenOut)
@@ -98,7 +99,11 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends()):
     refresh_token = create_access_token(
         {**token_data, "type": "refresh"}, expires_minutes=60 * 24 * 7
     )  # 7 días
-    return {"access_token": token, "refresh_token": refresh_token}
+    return {
+        "access_token": token, 
+        "refresh_token": refresh_token, 
+        "user_id": user["user_id"]
+    }
 
 
 @router.post("/auth/refresh", response_model=TokenOut)
@@ -119,7 +124,11 @@ async def refresh_token(data: RefreshTokenIn):
     new_refresh_token = create_access_token(
         {**token_data, "type": "refresh"}, expires_minutes=60 * 24 * 7
     )
-    return {"access_token": access_token, "refresh_token": new_refresh_token}
+    return {
+        "access_token": access_token, 
+        "refresh_token": new_refresh_token,
+        "user_id": payload["sub"]
+    }
 
 
 @router.post("/password-reset/request", response_model=PasswordResetRequestOut)
