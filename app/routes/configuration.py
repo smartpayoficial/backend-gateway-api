@@ -14,6 +14,59 @@ from app.services import configuration as configuration_service
 router = APIRouter(tags=["configurations"])
 
 
+@router.post("/create-default-configs/", response_model=List[ConfigurationDB], status_code=status.HTTP_201_CREATED)
+async def create_default_configurations(store_id: UUID):
+    """
+    Create default configurations for a store
+    
+    This endpoint creates a set of predefined configurations with the specified store_id:
+    - blocked_message: Message displayed when device is blocked due to non-payment
+    - blocked_sim: Message displayed when SIM card is not active
+    - payment_message: Message displayed when payment is completed
+    - payment_reminder: Message displayed as a payment reminder
+    
+    Returns the created configurations
+    """
+    default_configs = [
+        ConfigurationCreate(
+            key="blocked_message",
+            value="Mensaje de Bloqueo",
+            description="Tu dispositivo ha sido bloqueado por no pago para seguirlo usando realiza el pago.",
+            store_id=store_id
+        ),
+        ConfigurationCreate(
+            key="blocked_sim",
+            value="Mensaje de Bloqueo Sim",
+            description="Esta Sim Card no esta activa por favor solicite la activación.",
+            store_id=store_id
+        ),
+        ConfigurationCreate(
+            key="payment_message",
+            value="Mensaje de Pago",
+            description="Has completado el pago total de tu dispositivo.\nLa aplicación SmartPay te solicitará desinstalará la desinstalación.",
+            store_id=store_id
+        ),
+        ConfigurationCreate(
+            key="payment_reminder",
+            value="Recordatorio de Pago",
+            description="Te recordamos que faltan %DAY% para la fecha de vencimiento de tu pago. ¡Gracias por tu atención!",
+            store_id=store_id
+        )
+    ]
+    
+    created_configs = []
+    for config in default_configs:
+        new_config = await configuration_service.create_configuration(config)
+        if not new_config:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Configuration '{config.key}' could not be created.",
+            )
+        created_configs.append(new_config)
+    
+    return created_configs
+
+
 @router.post("/", response_model=ConfigurationDB, status_code=status.HTTP_201_CREATED)
 async def create_configuration(
     config: ConfigurationCreate,
