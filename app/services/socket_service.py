@@ -82,8 +82,12 @@ async def send_and_log_action(
     device_id: UUID, command: str, applied_by_id: UUID, payload: Optional[dict] = None
 ) -> JSONResponse:
     # Ensure command is a string (in case it's an enum)
+    
+    print(f"Antes '{command}'");
     if hasattr(command, "value"):
         command = command.value
+
+    print(f"Despues '{command}'");
     """
     Logs an action and sends it to a device if connected.
     - If the device is connected, sends the command and returns a 200 OK response.
