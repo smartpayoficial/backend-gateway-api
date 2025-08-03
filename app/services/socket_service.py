@@ -85,8 +85,8 @@ async def send_and_log_action(
     print(f"Antes '{command}'")
     if hasattr(command, "value"):
         command = command.value
-
-    print(f"Despues '{command}")
+    command = str(command)  # Ensure it's a string and preserve full length
+    print(f"Despues '{command}'")
     """
     Logs an action and sends it to a device if connected.
     - If the device is connected, sends the command and returns a 200 OK response.
@@ -98,8 +98,8 @@ async def send_and_log_action(
         # Mapear comandos específicos a tipos de acción genéricos para el registro en la BD.
         # El servicio de BD puede tener un conjunto de acciones más limitado que el gateway.
         db_action_map = {
-            "block_sim": "block",
-            "unblock_sim": "unblock",
+            "block_sim": "block_sim",
+            "unblock_sim": "unblock_sim",
         }
         db_action_command = db_action_map.get(command, command)
 
