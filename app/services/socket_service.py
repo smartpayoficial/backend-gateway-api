@@ -82,12 +82,11 @@ async def send_and_log_action(
     device_id: UUID, command: str, applied_by_id: UUID, payload: Optional[dict] = None
 ) -> JSONResponse:
     # Ensure command is a string (in case it's an enum)
-    
-    print(f"Antes '{command}'");
+    print(f"Antes '{command}'")
     if hasattr(command, "value"):
         command = command.value
 
-    print(f"Despues '{command}'");
+    print(f"Despues '{command}")
     """
     Logs an action and sends it to a device if connected.
     - If the device is connected, sends the command and returns a 200 OK response.
@@ -96,10 +95,18 @@ async def send_and_log_action(
     created_action = None
     # 1. Create the action record.
     try:
+        # Mapear comandos específicos a tipos de acción genéricos para el registro en la BD.
+        # El servicio de BD puede tener un conjunto de acciones más limitado que el gateway.
+        db_action_map = {
+            "block_sim": "block",
+            "unblock_sim": "unblock",
+        }
+        db_action_command = db_action_map.get(command, command)
+
         action_log = ActionCreate(
             device_id=device_id,
             applied_by_id=applied_by_id,
-            action=command,  # Usar el comando mapeado para el registro en la BD
+            action=db_action_command,  # Usar el comando mapeado para el registro en la BD
             description=f"Action '{command}' initiated for device {device_id}.",  # Mantener el comando original en la descripción
         )
         created_action = await action_service.create_action(action_log)
