@@ -27,7 +27,7 @@ async def action_block(device_id: UUID, body: ActionBody):
 async def action_block_sim(device_id: UUID, body: ActionBody):
     """Block a device SIM"""
     return await send_and_log_action(
-        device_id, ActionType.BLOCK_SIM, body.applied_by_id, body.payload
+        device_id, "block_sim", body.applied_by_id, body.payload
     )
 
 

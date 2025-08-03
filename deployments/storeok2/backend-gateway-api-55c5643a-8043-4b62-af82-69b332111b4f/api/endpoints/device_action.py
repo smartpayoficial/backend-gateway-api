@@ -75,7 +75,7 @@ async def action_unblock(device_id: UUID, body: ActionBody):
 async def action_unblock_sim(device_id: UUID, body: ActionBody):
     """Unblock a device SIM"""
     return await send_and_log_action(
-        device_id, ActionType.UNBLOCK_SIM, body.applied_by_id, body.payload
+        device_id, "unblock_sim", body.applied_by_id, body.payload
     )
 
 
