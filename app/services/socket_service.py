@@ -92,18 +92,10 @@ async def send_and_log_action(
     created_action = None
     # 1. Create the action record.
     try:
-        # Mapear comandos específicos a tipos de acción genéricos para el registro en la BD.
-        # El servicio de BD puede tener un conjunto de acciones más limitado que el gateway.
-        db_action_map = {
-            "block_sim": "block",
-            "unblock_sim": "unblock",
-        }
-        db_action_command = db_action_map.get(command, command)
-
         action_log = ActionCreate(
             device_id=device_id,
             applied_by_id=applied_by_id,
-            action=db_action_command,  # Usar el comando mapeado para el registro en la BD
+            action=command,  # Usar el comando mapeado para el registro en la BD
             description=f"Action '{command}' initiated for device {device_id}.",  # Mantener el comando original en la descripción
         )
         created_action = await action_service.create_action(action_log)
