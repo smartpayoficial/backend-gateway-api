@@ -23,7 +23,7 @@ class ActionType(str, Enum):
     UN_BLOCK = "unblock"
     EXCEPTION = "exception"
     BLOCK_SIM = "block_sim"
-    UNBLOCK_SIM = "unblock_sim"
+    UNBLOCK_SIM = "unblock_s"
 
 
 class ActionBase(BaseModel):
