@@ -81,12 +81,10 @@ manager = ConnectionManager()
 async def send_and_log_action(
     device_id: UUID, command: str, applied_by_id: UUID, payload: Optional[dict] = None
 ) -> JSONResponse:
-    # Ensure command is a string (in case it's an enum)
-    print(f"Antes '{command}'")
+
     if hasattr(command, "value"):
         command = command.value
-    command = str(command)  # Ensure it's a string and preserve full length
-    print(f"Despues '{command}'");
+    command = str(command)
     """
     Logs an action and sends it to a device if connected.
     - If the device is connected, sends the command and returns a 200 OK response.
@@ -104,8 +102,6 @@ async def send_and_log_action(
             action=command,  # Usar el comando mapeado para el registro en la BD
             description=f"Action '{command}' initiated for device {device_id}.",  # Mantener el comando original en la descripción
         )
-
-        print(f"ActionCreate '{action_log}'");
         created_action = await action_service.create_action(action_log)
     except Exception as e:
         # Handle potential errors during action creation (e.g., DB connection).
