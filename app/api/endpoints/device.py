@@ -2,6 +2,7 @@ from typing import Dict, List, Optional
 from uuid import UUID
 
 import httpx
+import os
 from fastapi import APIRouter, HTTPException, Path, Query, status
 
 # Imports for Device
@@ -11,6 +12,7 @@ from app.models.device import Device, DeviceCreate, DeviceUpdate
 from app.models.location import LocationCreate, LocationDB
 from app.services import device as device_service
 from app.services import location as location_service
+
 
 router = APIRouter()
 
@@ -86,6 +88,27 @@ async def delete_device(device_id: UUID):
     "/locations/", response_model=LocationDB, status_code=status.HTTP_201_CREATED
 )
 async def create_location(location_in: LocationCreate):
+    # Check if device exists
+    async with httpx.AsyncClient() as client:
+        try:
+            db_api = os.getenv("DB_API", "http://smartpay-db-api:8002")
+            response = await client.get(
+                f"{db_api}/api/v1/devices/{location_in.device_id}"
+            )
+            response.raise_for_status()
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code == 404:
+                raise HTTPException(
+                    status_code=404,
+                    detail=f"Device with ID {location_in.device_id} not found",
+                )
+            else:
+                # If we get an error other than 404, we return the same status and detail
+                detail = e.response.json().get("detail", "Error from device service")
+                raise HTTPException(status_code=e.response.status_code, detail=detail)
+        except Exception as e:
+            raise HTTPException(status_code=500, detail="Internal server error")
+
     location = await location_service.create_location(location_in)
     if not location:
         raise HTTPException(
