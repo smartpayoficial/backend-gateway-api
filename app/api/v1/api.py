@@ -13,6 +13,7 @@ from app.api.endpoints import (
     role,
     store,
     user,
+    qr_enrollment
 )
 from app.routers import socket_router
 from app.routes import (
@@ -48,6 +49,7 @@ api_router.include_router(
 api_router.include_router(google.router, prefix="/google", tags=["google"])
 api_router.include_router(payment.router, prefix="/payments", tags=["payments"])
 api_router.include_router(plan.router, prefix="/plans", tags=["plans"])
+api_router.include_router(qr_enrollment.router, prefix="/qrEnrollment", tags=["qrEnrollment"])
 api_router.include_router(region.router, prefix="/regions", tags=["regions"])
 api_router.include_router(role.router, prefix="/roles", tags=["roles"])
 api_router.include_router(sim.router, prefix="/sims", tags=["sims"])
