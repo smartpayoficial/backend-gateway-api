@@ -1,6 +1,7 @@
 import os
 from datetime import date, datetime
 from typing import Optional, List
+from uuid import UUID
 from fastapi import APIRouter, Depends, HTTPException, Query
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
@@ -31,7 +32,8 @@ class AnalyticsResponse(BaseModel):
 @router.get("/date-range", response_model=AnalyticsResponse)
 async def get_analytics_by_date_range(
     start_date: date = Query(..., description="Fecha inicial (YYYY-MM-DD)"),
-    end_date: Optional[date] = Query(None, description="Fecha final (YYYY-MM-DD). Si no se proporciona, se usa la fecha actual")
+    end_date: Optional[date] = Query(None, description="Fecha final (YYYY-MM-DD). Si no se proporciona, se usa la fecha actual"),
+    store_id: Optional[UUID] = Query(None, description="ID de la tienda para filtrar (opcional)")
 ):
     """
     Obtiene analytics por rango de fechas desde el servicio smartpay-db-api
@@ -57,6 +59,8 @@ async def get_analytics_by_date_range(
             
         db_api_url = f"{db_api}/api/v1/analytics/date-range"
         params = {"start_date": start_date.isoformat(), "end_date": end_date.isoformat()}
+        if store_id is not None:
+            params["store_id"] = str(store_id)
         
         logger.info(f"Conectando a DB API en: {db_api_url}")
         logger.info(f"Parámetros: {params}")
@@ -140,6 +144,7 @@ async def get_analytics_by_date_range(
 async def get_analytics_excel(
     start_date: date = Query(..., description="Fecha inicial (YYYY-MM-DD)"),
     end_date: Optional[date] = Query(None, description="Fecha final (YYYY-MM-DD). Si no se proporciona, se usa la fecha actual"),
+    store_id: Optional[UUID] = Query(None, description="ID de la tienda para filtrar (opcional)"),
     current_user: User = Depends(get_current_user)
 ):
     """
@@ -166,6 +171,8 @@ async def get_analytics_excel(
             "start_date": start_date.isoformat(),
             "end_date": end_date.isoformat()
         }
+        if store_id is not None:
+            params["store_id"] = str(store_id)
         
         # Hacer la petición al servicio smartpay-db-api
         async with httpx.AsyncClient() as client:
