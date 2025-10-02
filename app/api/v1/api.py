@@ -1,6 +1,7 @@
 from fastapi import APIRouter
 
 from app.api.endpoints import (
+    account_type,
     analytics,
     auth,
     city,
@@ -9,11 +10,12 @@ from app.api.endpoints import (
     device_action,
     enrolment,
     plan,
+    qr_enrollment,
     region,
     role,
     store,
+    store_contact,
     user,
-    qr_enrollment
 )
 from app.routers import socket_router
 from app.routes import (
@@ -49,9 +51,15 @@ api_router.include_router(
 api_router.include_router(google.router, prefix="/google", tags=["google"])
 api_router.include_router(payment.router, prefix="/payments", tags=["payments"])
 api_router.include_router(plan.router, prefix="/plans", tags=["plans"])
-api_router.include_router(qr_enrollment.router, prefix="/qrEnrollment", tags=["qrEnrollment"])
+api_router.include_router(
+    qr_enrollment.router, prefix="/qrEnrollment", tags=["qrEnrollment"]
+)
 api_router.include_router(region.router, prefix="/regions", tags=["regions"])
 api_router.include_router(role.router, prefix="/roles", tags=["roles"])
 api_router.include_router(sim.router, prefix="/sims", tags=["sims"])
 api_router.include_router(store.router, prefix="/stores", tags=["stores"])
 api_router.include_router(user.router, prefix="/users", tags=["users"])
+api_router.include_router(
+    account_type.router, prefix="/account-types", tags=["account-types"]
+)
+api_router.include_router(store_contact.router, prefix="/store-contacts", tags=["store-contacts"])

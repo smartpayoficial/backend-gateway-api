@@ -5,17 +5,17 @@ services:
       dockerfile: docker/Dockerfile
     container_name: backend-api
     ports:
-      - "8000:8000"
-      - "8001:8001"  # Puerto para WebSocket
+      - "9000:9000"
+      - "9001:9001"  # Puerto para WebSocket
     environment:
       HOST: 0.0.0.0
-      PORT: 8000
+      PORT: 9000
       PYTHONUNBUFFERED: 1
       PYTHONPATH: /app
       SOCKETIO_ASYNC_MODE: asgi
-      DB_API: http://smartpay-db-api:8002
-      USER_SVC_URL: http://smartpay-db-api:8002
-      REDIRECT_URI: https://smartpay-oficial.com:8000/api/v1/google/auth/callback
+      DB_API: http://smartpay-db-api:9002
+      USER_SVC_URL: http://smartpay-db-api:9002
+      REDIRECT_URI: https://smartpay-oficial.com:9000/api/v1/google/auth/callback
       CLIENT_SECRET: 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
       CLIENT_ID: 631597337466-dt7qitq7tg2022rhje5ib5sk0eua6t79.apps.googleusercontent.com
       # Configuración de correo electrónico
@@ -39,7 +39,7 @@ services:
     extra_hosts:
       - "host.docker.internal:host-gateway"
     # Comando sin SSL para desarrollo
-    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8000"]
+    command: ["uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9000"]
     sysctls:
       - net.core.somaxconn=65535
     ulimits:
@@ -77,7 +77,7 @@ services:
       dockerfile: docker/Dockerfile
     container_name: smartpay-db-api-dev
     ports:
-      - "8002:8002"
+      - "9002:9002"
     environment:
       - PYTHONUNBUFFERED=1
       - WEB_APP_VERSION=0.1.0
@@ -89,7 +89,7 @@ services:
       - PYTHONPATH=/usr/src/app
     volumes:
       - ../../db-smartpay:/usr/src/app
-    command: ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "8002", "--reload"]
+    command: ["python", "-m", "uvicorn", "app.main:app", "--host", "0.0.0.0", "--port", "9002", "--reload"]
     depends_on:
       smartpay-db:
         condition: service_healthy
