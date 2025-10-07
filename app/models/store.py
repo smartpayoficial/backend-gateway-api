@@ -2,10 +2,11 @@ from datetime import datetime
 from typing import Optional
 from uuid import UUID
 
+from app.models.store_contact import StoreContactDB
 from pydantic import BaseModel
 
 from app.models.country import CountryDB
-
+from typing import List
 
 class AdminDB(BaseModel):
     city_id: UUID
@@ -64,6 +65,7 @@ class StoreDB(StoreBase):
     updated_at: datetime
     country: Optional[CountryDB] = None
     admin: Optional[AdminDB] = None  # Entidad completa del admin
+    contacts: List[StoreContactDB] = []
     
     # Mantener admin_id explícitamente para compatibilidad
     @property
