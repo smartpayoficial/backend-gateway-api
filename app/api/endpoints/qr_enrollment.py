@@ -20,3 +20,4 @@ async def get_qr_enrollment(enrollment_id: UUID, store_id: UUID, re_enrollment: 
             "RE_ENROLLMENT": re_enrollment
         }
     }
+ 
