@@ -1,15 +1,45 @@
 from datetime import datetime
-from typing import Optional
+from typing import Any, Dict, List, Optional
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, EmailStr, field_validator
 
 from .city import CityDB
 from .role import Role
-from .store import StoreDB
 
 
-# Simplified store model for user response
+# Account Type model
+class AccountType(BaseModel):
+    id: int
+    name: str
+    description: Optional[str] = None
+    icon_url: Optional[str] = None
+    is_international: Optional[bool] = None
+    form_schema: Optional[List[Dict[str, Any]]] = None
+    category: Optional[str] = None
+    
+    model_config = ConfigDict(
+        from_attributes=True,
+        extra="ignore",
+    )
+
+
+# Store Contact model
+class StoreContact(BaseModel):
+    id: UUID
+    account_type_id: int
+    contact_details: Dict[str, Any]
+    description: Optional[str] = None
+    store_id: UUID
+    account_type: Optional[AccountType] = None
+    
+    model_config = ConfigDict(
+        from_attributes=True,
+        extra="ignore",
+    )
+
+
+# Store Response model
 class StoreResponse(BaseModel):
     id: UUID
     nombre: str
@@ -18,6 +48,7 @@ class StoreResponse(BaseModel):
     tokens_disponibles: Optional[int] = None
     back_link: Optional[str] = None
     db_link: Optional[str] = None
+    contacts: List[StoreContact] = []  # ✅ ESTE ES EL CAMPO QUE FALTABA
     created_at: Optional[datetime] = None
     updated_at: Optional[datetime] = None
     
@@ -34,13 +65,11 @@ class UserBase(BaseModel):
     first_name: Optional[str] = None
     last_name: Optional[str] = None
     dni: Optional[str] = None
-
     middle_name: Optional[str] = None
     second_last_name: Optional[str] = None
     prefix: Optional[str] = None
     phone: Optional[str] = None
     address: Optional[str] = None
-    # A = Active, I = Initial
     state: Optional[str] = "A"
 
 
@@ -79,8 +108,8 @@ class UserUpdate(BaseModel):
 class User(UserBase):
     model_config = ConfigDict(
         from_attributes=True,
-        extra="ignore",  # Ignore extra fields
-        arbitrary_types_allowed=True,  # Allow arbitrary types
+        extra="ignore",
+        arbitrary_types_allowed=True,
     )
 
     user_id: UUID
