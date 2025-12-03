@@ -31,12 +31,13 @@ async def get_action(action_id: UUID):
 @router.get("/", response_model=List[ActionResponse])
 async def get_actions(
     device_id: Optional[UUID] = Query(None),
+    television_id: Optional[UUID] = Query(None),
     state: Optional[ActionState] = Query(None),
 ):
     """
     Retrieves a list of actions, with optional filters.
     """
-    return await action_service.get_actions(device_id=device_id, state=state)
+    return await action_service.get_actions(device_id=device_id, television_id=television_id, state=state)
 
 
 @router.patch("/{action_id}", response_model=ActionResponse)

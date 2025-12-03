@@ -141,7 +141,8 @@ class CityDB(CityBase):
 
 # Schemas for Location
 class LocationBase(BaseModel):
-    device_id: UUID
+    device_id: Optional[UUID] = None
+    television_id: Optional[UUID] = None
     latitude: float
     longitude: float
 

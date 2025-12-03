@@ -27,6 +27,7 @@ async def get_payments(
     state: Optional[PaymentState] = None,
     plan_id: Optional[UUID] = None,
     device_id: Optional[UUID] = None,
+    television_id: Optional[UUID] = None,
     store_id: Optional[UUID] = None
 ) -> List[PaymentResponse]:
     params = {}
@@ -36,6 +37,8 @@ async def get_payments(
         params["plan_id"] = str(plan_id)
     if device_id:
         params["device_id"] = str(device_id)
+    if television_id:
+        params["television_id"] = str(television_id)
     if store_id:
         params["store_id"] = str(store_id)
 

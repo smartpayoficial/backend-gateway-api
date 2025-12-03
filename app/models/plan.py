@@ -7,6 +7,7 @@ from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 from .device import DeviceDB
 from .user import UserPaymentResponse
+from .television import TelevisionDB
 
 
 class PlanBase(BaseModel):
@@ -20,7 +21,8 @@ class PlanBase(BaseModel):
 class PlanCreate(BaseModel):
     user_id: UUID
     vendor_id: UUID
-    device_id: UUID
+    device_id: Optional[UUID] = None
+    television_id: Optional[UUID] = None
     initial_date: str = Field(description="Date in ISO 8601 format (YYYY-MM-DD)")
     value: Decimal
     quotas: int
@@ -51,7 +53,8 @@ class PlanUpdate(BaseModel):
 class Plan(PlanBase):
     user_id: UUID
     vendor_id: UUID
-    device_id: UUID
+    device_id: Optional[UUID] = None
+    television_id: Optional[UUID] = None
     initial_date: date
     quotas: int
     period: int
@@ -70,7 +73,8 @@ class Plan(PlanBase):
 class PlanDB(BaseModel):
     user_id: UUID
     vendor_id: UUID
-    device_id: UUID
+    device_id: Optional[UUID] = None
+    television_id: Optional[UUID] = None
     initial_date: str = Field(description="Date in ISO 8601 format (YYYY-MM-DD)")
     quotas: int
     period: int
@@ -100,7 +104,8 @@ class PlanDB(BaseModel):
 class PlanRaw(BaseModel):
     user_id: UUID
     vendor_id: UUID
-    device_id: UUID
+    device_id: Optional[UUID] = None
+    television_id: Optional[UUID] = None
     initial_date: str
     quotas: int
     period: int
@@ -110,6 +115,7 @@ class PlanRaw(BaseModel):
     user: Optional[UserPaymentResponse] = None
     vendor: Optional[UserPaymentResponse] = None
     device: Optional[DeviceDB] = None
+    television: Optional[TelevisionDB] = None
 
     model_config = ConfigDict(
         from_attributes=True,

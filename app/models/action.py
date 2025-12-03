@@ -27,7 +27,8 @@ class ActionType(str, Enum):
 
 
 class ActionBase(BaseModel):
-    device_id: UUID
+    device_id: Optional[UUID] = None
+    television_id: Optional[UUID] = None
     state: ActionState = ActionState.PENDING
     applied_by_id: UUID
     action: ActionType
@@ -59,7 +60,8 @@ class ActionInDB(ActionBase):
 
 class ActionResponse(BaseModel):
     action_id: UUID
-    device_id: UUID
+    device_id: Optional[UUID] = None
+    television_id: Optional[UUID] = None
     state: ActionState
     action: ActionType
     description: Optional[str] = None
