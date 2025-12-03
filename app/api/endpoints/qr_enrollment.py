@@ -9,9 +9,9 @@ router = APIRouter()
 async def get_qr_enrollment(enrollment_id: UUID, store_id: UUID, re_enrollment: bool):
     return {
         "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.olimpo.smartpay/com.olimpo.smartpay.receivers.SmartPayDeviceAdminReceiver",
-        "android.app.extra.PROVISIONING_DEVICE_ADMIN_SIGNATURE_CHECKSUM": "aOEWjZeR3HTtxGiiHyCeVB9UKpwBGtMKLc0ULZeNaPw=",
+        "android.app.extra.PROVISIONING_DEVICE_ADMIN_SIGNATURE_CHECKSUM": "ckDVBumcwRtyA_mMXX6zZVeAY9P9Mx5v_Ah9xMg6SCQ=",
         "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION": "https://appincdevs.com/enterprise/smartpay-google.apk",
-        "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_CHECKSUM": "aOEWjZeR3HTtxGiiHyCeVB9UKpwBGtMKLc0ULZeNaPw=",
+        "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_CHECKSUM": "ckDVBumcwRtyA_mMXX6zZVeAY9P9Mx5v_Ah9xMg6SCQ=",
         "android.app.extra.PROVISIONING_LEAVE_ALL_SYSTEM_APPS_ENABLED": True,
         "android.app.extra.PROVISIONING_LOCALE": "es_ES",
         "android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE": {
@@ -20,3 +20,4 @@ async def get_qr_enrollment(enrollment_id: UUID, store_id: UUID, re_enrollment: 
             "RE_ENROLLMENT": re_enrollment
         }
     }
+ 
