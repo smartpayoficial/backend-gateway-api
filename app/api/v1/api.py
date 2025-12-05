@@ -16,6 +16,8 @@ from app.api.endpoints import (
     store,
     store_contact,
     user,
+    qr_enrollment,
+    television
 )
 from app.routers import socket_router
 from app.routes import (
@@ -58,6 +60,7 @@ api_router.include_router(region.router, prefix="/regions", tags=["regions"])
 api_router.include_router(role.router, prefix="/roles", tags=["roles"])
 api_router.include_router(sim.router, prefix="/sims", tags=["sims"])
 api_router.include_router(store.router, prefix="/stores", tags=["stores"])
+api_router.include_router(television.router, prefix="/televisions", tags=["televisions"])
 api_router.include_router(user.router, prefix="/users", tags=["users"])
 api_router.include_router(
     account_type.router, prefix="/account-types", tags=["account-types"]

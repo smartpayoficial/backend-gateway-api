@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Optional
+from typing import Optional, Dict, Any
 from uuid import UUID
 from pydantic import BaseModel, Field, ConfigDict
 
@@ -46,6 +46,7 @@ class PaymentPlanResponse(BaseModel):
     user_id: Optional[UUID] = None
     vendor_id: Optional[UUID] = None
     device_id: Optional[UUID] = None
+    television_id: Optional[UUID] = None
     initial_date: Optional[date] = None
     value: Optional[Decimal] = None
     quotas: Optional[int] = None
@@ -55,7 +56,8 @@ class PaymentPlanResponse(BaseModel):
     # Campos anidados como diccionarios para mantener estructura completa
     user: dict = Field(default_factory=dict)
     vendor: dict = Field(default_factory=dict)
-    device: dict = Field(default_factory=dict)
+    device: Optional[Dict[str, Any]] = None
+    television: Optional[Dict[str, Any]] = None
 
     model_config = ConfigDict(
         from_attributes=True,

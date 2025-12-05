@@ -13,7 +13,8 @@ router = APIRouter()
 async def get_all_payments(
     state: Optional[str] = None,
     plan_id: Optional[UUID] = None,
-    device_id: Optional[UUID] = None
+    device_id: Optional[UUID] = None,
+    television_id: Optional[UUID] = None
 ):
     """
     Obtiene todos los pagos con filtros opcionales.
@@ -23,7 +24,8 @@ async def get_all_payments(
         return await payment_service.get_payments(
             state=state,
             plan_id=plan_id,
-            device_id=device_id
+            device_id=device_id,
+            television_id=television_id
         )
     except httpx.HTTPStatusError as e:
         raise HTTPException(

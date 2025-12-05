@@ -19,12 +19,14 @@ async def create_plan(plan_in: PlanCreate) -> Optional[Plan]:
 
 
 async def get_all_plans(
-    device_id: Optional[UUID] = None, user_id: Optional[UUID] = None, store_id: Optional[UUID] = None
+    device_id: Optional[UUID] = None, television_id: Optional[UUID] = None, user_id: Optional[UUID] = None, store_id: Optional[UUID] = None
 ) -> List[PlanRaw]:
     async with httpx.AsyncClient() as client:
         params = {}
         if device_id:
             params["device_id"] = str(device_id)
+        if television_id:
+            params["television_id"] = str(television_id)
         if user_id:
             params["user_id"] = str(user_id)
         if store_id:

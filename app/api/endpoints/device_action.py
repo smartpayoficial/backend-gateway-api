@@ -12,14 +12,15 @@ router = APIRouter()
 
 class ActionBody(BaseModel):
     applied_by_id: UUID
-    payload: Optional[Dict[str, Any]] = None
+    payload: Optional[Dict[str, Any]] = None,
+    isTelevision: Optional[bool] = False
 
 
 @router.post("/{device_id}/block", tags=["Device Actions"])
 async def action_block(device_id: UUID, body: ActionBody):
     """Block a device"""
     return await send_and_log_action(
-        device_id, ActionType.BLOCK, body.applied_by_id, body.payload
+        device_id, ActionType.BLOCK, body.applied_by_id, body.payload, body.isTelevision
     )
 
 
@@ -27,7 +28,7 @@ async def action_block(device_id: UUID, body: ActionBody):
 async def action_block_sim(device_id: UUID, body: ActionBody):
     """Block a device SIM"""
     return await send_and_log_action(
-        device_id, ActionType.BLOCK_SIM, body.applied_by_id, body.payload
+        device_id, ActionType.BLOCK_SIM, body.applied_by_id, body.payload, body.isTelevision
     )
 
 
@@ -35,7 +36,7 @@ async def action_block_sim(device_id: UUID, body: ActionBody):
 async def action_locate(device_id: UUID, body: ActionBody):
     """Locate a device"""
     return await send_and_log_action(
-        device_id, "locate", body.applied_by_id, body.payload
+        device_id, "locate", body.applied_by_id, body.payload, body.isTelevision
     )
 
 
@@ -43,7 +44,7 @@ async def action_locate(device_id: UUID, body: ActionBody):
 async def action_refresh(device_id: UUID, body: ActionBody):
     """Refresh a device"""
     return await send_and_log_action(
-        device_id, "refresh", body.applied_by_id, body.payload
+        device_id, "refresh", body.applied_by_id, body.payload, body.isTelevision
     )
 
 
@@ -51,7 +52,7 @@ async def action_refresh(device_id: UUID, body: ActionBody):
 async def action_notify(device_id: UUID, body: ActionBody):
     """Send a notification to a device"""
     return await send_and_log_action(
-        device_id, "notify", body.applied_by_id, body.payload
+        device_id, "notify", body.applied_by_id, body.payload, body.isTelevision
     )
 
 
@@ -59,7 +60,7 @@ async def action_notify(device_id: UUID, body: ActionBody):
 async def action_unenroll(device_id: UUID, body: ActionBody):
     """Unenroll a device"""
     return await send_and_log_action(
-        device_id, "unenroll", body.applied_by_id, body.payload
+        device_id, "unenroll", body.applied_by_id, body.payload, body.isTelevision
     )
 
 
@@ -67,7 +68,7 @@ async def action_unenroll(device_id: UUID, body: ActionBody):
 async def action_unblock(device_id: UUID, body: ActionBody):
     """Unblock a device"""
     return await send_and_log_action(
-        device_id, ActionType.UN_BLOCK, body.applied_by_id, body.payload
+        device_id, ActionType.UN_BLOCK, body.applied_by_id, body.payload, body.isTelevision
     )
 
 
@@ -75,7 +76,7 @@ async def action_unblock(device_id: UUID, body: ActionBody):
 async def action_unblock_sim(device_id: UUID, body: ActionBody):
     """Unblock a device SIM"""
     return await send_and_log_action(
-        device_id, ActionType.UNBLOCK_SIM, body.applied_by_id, body.payload
+        device_id, ActionType.UNBLOCK_SIM, body.applied_by_id, body.payload, body.isTelevision
     )
 
 
@@ -83,5 +84,5 @@ async def action_unblock_sim(device_id: UUID, body: ActionBody):
 async def action_exception(device_id: UUID, body: ActionBody):
     """Send an exception to a device"""
     return await send_and_log_action(
-        device_id, "exception", body.applied_by_id, body.payload
+        device_id, "exception", body.applied_by_id, body.payload, body.isTelevision
     )

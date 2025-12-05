@@ -188,10 +188,12 @@ async def create_location(location_in: LocationCreate) -> Optional[LocationDB]:
         return None
 
 
-async def get_locations(device_id: Optional[UUID] = None) -> List[LocationDB]:
+async def get_locations(device_id: Optional[UUID] = None, television_id: Optional[UUID] = None) -> List[LocationDB]:
     params = {}
     if device_id:
         params["device_id"] = str(device_id)
+    if television_id:
+        params["television_id"] = str(television_id)
 
     async with httpx.AsyncClient() as client:
         response = await client.get(f"{USER_SVC_URL}/api/v1/locations/", params=params)

@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict
 
 from .device import Device
 from .plan import Plan
+from .television import Television
 
 
 class PaymentState(str, Enum):
@@ -21,7 +22,8 @@ class PaymentState(str, Enum):
 class PlanBase(BaseModel):
     user_id: UUID
     vendor_id: UUID
-    device_id: UUID
+    device_id: Optional[UUID] = None
+    television_id: Optional[UUID] = None
     initial_date: date
     quotas: int
     contract: str
@@ -36,6 +38,7 @@ class PlanUpdate(BaseModel):
     user_id: Optional[UUID] = None
     vendor_id: Optional[UUID] = None
     device_id: Optional[UUID] = None
+    television_id: Optional[UUID] = None
     initial_date: Optional[date] = None
     quotas: Optional[int] = None
     value: Optional[Decimal] = None
@@ -55,6 +58,7 @@ class Payment(BaseModel):
     state: PaymentState
     date: datetime
     reference: str
+    television: Optional[Television] = None
     device: Optional[Device] = None
     plan: Optional[Plan] = None
 
@@ -71,12 +75,14 @@ class PaymentCreate(BaseModel):
     state: PaymentState
     date: datetime
     reference: str
-    device_id: UUID
+    device_id: Optional[UUID] = None
+    television_id: Optional[UUID] = None
     plan_id: UUID
 
 
 class PaymentUpdate(BaseModel):
     device_id: Optional[UUID] = None
+    television_id: Optional[UUID] = None
     plan_id: Optional[UUID] = None
     value: Optional[Decimal] = None
     method: Optional[str] = None

@@ -45,7 +45,7 @@ async def create_action(action_in: ActionCreate) -> Optional[ActionResponse]:
 
 
 async def get_actions(
-    device_id: Optional[UUID] = None, state: Optional[ActionState] = None
+    device_id: Optional[UUID] = None,  television_id: Optional[UUID] = None, state: Optional[ActionState] = None
 ) -> List[ActionResponse]:
     """
     Obtiene una lista de acciones desde el servicio de base de datos, con filtros opcionales.
@@ -54,6 +54,8 @@ async def get_actions(
     params = {}
     if device_id:
         params["device_id"] = str(device_id)
+    if television_id:
+        params["television_id"] = str(television_id)
     if state:
         params["state"] = params["state"] = state.value
 

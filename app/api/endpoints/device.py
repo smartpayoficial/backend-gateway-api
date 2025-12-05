@@ -84,44 +84,57 @@ async def delete_device(device_id: UUID):
 # --- Location Endpoints (related to Devices) ---
 
 
-@router.post(
-    "/locations/", response_model=LocationDB, status_code=status.HTTP_201_CREATED
-)
+@router.post("/locations/", response_model=LocationDB, status_code=status.HTTP_201_CREATED)
 async def create_location(location_in: LocationCreate):
-    # Check if device exists
-    async with httpx.AsyncClient() as client:
-        try:
-            db_api = os.getenv("DB_API", "http://smartpay-db-api:8002")
-            response = await client.get(
-                f"{db_api}/api/v1/devices/{location_in.device_id}"
-            )
-            response.raise_for_status()
-        except httpx.HTTPStatusError as e:
-            if e.response.status_code == 404:
-                raise HTTPException(
-                    status_code=404,
-                    detail=f"Device with ID {location_in.device_id} not found",
-                )
-            else:
-                # If we get an error other than 404, we return the same status and detail
-                detail = e.response.json().get("detail", "Error from device service")
-                raise HTTPException(status_code=e.response.status_code, detail=detail)
-        except Exception as e:
-            raise HTTPException(status_code=500, detail="Internal server error")
+    db_api = os.getenv("DB_API", "http://smartpay-db-api:8002")
 
+    async with httpx.AsyncClient() as client:
+        # Si viene device_id -> valida el device
+        if location_in.device_id:
+            try:
+                resp = await client.get(f"{db_api}/api/v1/devices/{location_in.device_id}")
+                resp.raise_for_status()
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 404:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Device with ID {location_in.device_id} not found",
+                    )
+                raise HTTPException(status_code=e.response.status_code, detail="Error from device service")
+        
+        # Si no viene device_id pero sí television_id -> valida la TV
+        elif location_in.television_id:
+            try:
+                resp = await client.get(f"{db_api}/api/v1/televisions/{location_in.television_id}")
+                resp.raise_for_status()
+            except httpx.HTTPStatusError as e:
+                if e.response.status_code == 404:
+                    raise HTTPException(
+                        status_code=404,
+                        detail=f"Television with ID {location_in.television_id} not found",
+                    )
+                raise HTTPException(status_code=e.response.status_code, detail="Error from television service")
+        
+        # Si no viene ninguno -> error
+        else:
+            raise HTTPException(
+                status_code=422,
+                detail="Either device_id or television_id must be provided"
+            )
+
+    # Crear ubicación en tu servicio
     location = await location_service.create_location(location_in)
     if not location:
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Location could not be created.",
+            status_code=400,
+            detail="Location could not be created."
         )
     return location
 
-
 @router.get("/locations/", response_model=List[LocationDB])
-async def get_all_locations(device_id: Optional[UUID] = Query(None)):
+async def get_all_locations(device_id: Optional[UUID] = Query(None), television_id: Optional[UUID] = Query(None)):
     try:
-        return await location_service.get_locations(device_id=device_id)
+        return await location_service.get_locations(device_id=device_id, television_id=television_id)
     except httpx.HTTPStatusError as e:
         raise HTTPException(
             status_code=e.response.status_code,
