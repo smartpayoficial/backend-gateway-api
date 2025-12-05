@@ -99,9 +99,9 @@ services:
 
 networks:
   smartpay:
-    external: true
-    #name: smartpay
-    #driver: bridge
+    #external: true
+    name: smartpay
+    driver: bridge
 
 volumes:
   smartpay-db-dev:
