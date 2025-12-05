@@ -9,9 +9,9 @@ router = APIRouter()
 async def get_qr_enrollment(enrollment_id: UUID, store_id: UUID, re_enrollment: bool):
     return {
         "android.app.extra.PROVISIONING_DEVICE_ADMIN_COMPONENT_NAME": "com.olimpo.smartpay/com.olimpo.smartpay.receivers.SmartPayDeviceAdminReceiver",
-        "android.app.extra.PROVISIONING_DEVICE_ADMIN_SIGNATURE_CHECKSUM": "mADM2tg0KXIZpq6L2WbpNPc-OY3BB0yH3Pr-Hc9BlVI=",
+        "android.app.extra.PROVISIONING_DEVICE_ADMIN_SIGNATURE_CHECKSUM": "pD5YO4NSiTD9Yztl9HcibR-cGEf5kRVMvdaIKUWOxYY=",
         "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_DOWNLOAD_LOCATION": "https://appincdevs.com/enterprise/smartpay-google.apk",
-        "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_CHECKSUM": "mADM2tg0KXIZpq6L2WbpNPc-OY3BB0yH3Pr-Hc9BlVI=",
+        "android.app.extra.PROVISIONING_DEVICE_ADMIN_PACKAGE_CHECKSUM": "pD5YO4NSiTD9Yztl9HcibR-cGEf5kRVMvdaIKUWOxYY=",
         "android.app.extra.PROVISIONING_LEAVE_ALL_SYSTEM_APPS_ENABLED": True,
         "android.app.extra.PROVISIONING_LOCALE": "es_ES",
         "android.app.extra.PROVISIONING_ADMIN_EXTRAS_BUNDLE": {
