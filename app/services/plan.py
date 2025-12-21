@@ -4,7 +4,7 @@ from uuid import UUID
 
 import httpx
 
-from app.models.plan import Plan, PlanCreate, PlanDB, PlanRaw, PlanUpdate
+from app.models.plan import Plan, PlanCreate, PlanDB, PlanRaw, PlanUpdate, PaymentInPlanResponse
 
 USER_SVC_URL = os.getenv("USER_SVC_URL", "http://localhost:8002")
 PLAN_API_URL = f"{USER_SVC_URL}/api/v1/plans"
@@ -34,7 +34,14 @@ async def get_all_plans(
 
         response = await client.get(PLAN_API_URL, params=params)
         response.raise_for_status()
-        return [PlanRaw(**item) for item in response.json()]
+        plans = []
+        for item in response.json():
+            # Si vienen los pagos, los convertimos al modelo
+            payments_data = item.get("payments", [])
+            item["payments"] = [PaymentInPlanResponse(**p) for p in payments_data]
+            plans.append(PlanRaw(**item))
+
+        return plans
 
 
 async def get_plan_by_id(plan_id: UUID) -> Optional[PlanRaw]:

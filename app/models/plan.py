@@ -2,9 +2,9 @@ from datetime import date
 from decimal import Decimal
 from typing import Optional
 from uuid import UUID
-
+from datetime import datetime
 from pydantic import BaseModel, ConfigDict, Field, field_validator
-
+from typing import List
 from .device import DeviceDB
 from .user import UserPaymentResponse
 from .television import TelevisionDB
@@ -100,7 +100,15 @@ class PlanDB(BaseModel):
 
     model_config = ConfigDict(from_attributes=True, populate_by_name=True)
 
+class PaymentInPlanResponse(BaseModel):
+    payment_id: UUID
+    value: Decimal
+    method: str
+    state: str
+    date: datetime
+    reference: str
 
+    model_config = ConfigDict(from_attributes=True)
 class PlanRaw(BaseModel):
     user_id: UUID
     vendor_id: UUID
@@ -116,6 +124,7 @@ class PlanRaw(BaseModel):
     vendor: Optional[UserPaymentResponse] = None
     device: Optional[DeviceDB] = None
     television: Optional[TelevisionDB] = None
+    payments: List[PaymentInPlanResponse] = [] 
 
     model_config = ConfigDict(
         from_attributes=True,
